@@ -6,7 +6,7 @@
 #include <vector>
 #include <array>
 #include <optional>
-
+#include <glm/glm.hpp>
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -59,17 +59,20 @@ enum class BlockType{
 // |0 0 0 0 0
 //  --------->
 // the left corner point's world position is (startColumn, startRow)
-
+struct BlockPosition {
+    int startRow;
+    int startColumn;
+};
 class Block {
 public:
 
     Block(BlockType type);
-    //rotate if valid else return empty optional
-    std::optional<Block> rotate(Grid grid);
+    //rotate if valid
+    bool rotate(Grid grid);
 
     //just rotate in the local coordinate
     void rotate();
-    std::pair<int, int> getPosition() const;
+    BlockPosition getPosition() const;
     bool moveLeft(Grid grid);
     bool moveRight(Grid grid);
     bool moveDown(Grid grid);
@@ -88,6 +91,7 @@ public:
     //return shape
     const std::vector<std::vector<int>>& getShape() const;
 
+    glm::vec3 getColor() const;
     bool touch(Grid grid);
 
     void output() {
@@ -105,6 +109,7 @@ public:
 private:
     std::vector<std::vector<int>> shape;
     BlockType type;
+    glm::vec3 color;
     int startRow = 0;
     int startColumn = 0;
     unsigned int rotation = 0;

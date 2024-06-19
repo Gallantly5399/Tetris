@@ -13,8 +13,6 @@
 #include <filesystem>
 #include <unordered_map>
 
-
-
 struct Vertex {
     glm::vec2 position;
     glm::vec3 color;
@@ -59,7 +57,10 @@ struct VertexVector {
     }
     void clear() {
         index = 0;
-        data.clear();
+        for (auto &i : data) {
+            i.position = glm::vec2(0.0f);
+            i.color = glm::vec3(0.0f);
+        }
     }
 };
 
@@ -75,22 +76,48 @@ struct IndexVector {
     }
     void clear() {
         index = 0;
-        data.clear();
+        memset(data.data(), 0, sizeof(uint32_t) * data.size());
     }
 };
 
 class Render {
 public:
-    Render(GLFWkeyfun key_callback) ;
+    void setKeyCallback(GLFWkeyfun key_callback) {
+        this->key_callback = key_callback;
+        glfwSetKeyCallback(window, key_callback);
+    }
+    void clear() {
+        vertices.clear();
+        indices.clear();
+    }
+    explicit Render(GLFWkeyfun key_callback = nullptr);
+    void resizeData(int size) {
+        vertices.data.resize(size);
+        indices.data.resize(size);
+    }
     void resize(const unsigned int Screen_Width, const unsigned int Screen_Height);
-    Render(const unsigned int Screen_Width, const unsigned int Screen_Height, GLFWkeyfun key_callback);
+    Render(const unsigned int Screen_Width, const unsigned int Screen_Height, GLFWkeyfun key_callback = nullptr);
     void render(std::vector<Vertex> vertices_, std::vector<uint32_t> indices);
+    void render();
     ~Render();
     void setFrameBufferResized(bool frameBufferResized_);
     bool shouldStop();
     void inputCube(VertexVector& vertices, IndexVector& indices, glm::vec2 leftCorner_, float width, float height);
+    void inputCube(glm::vec2 leftCorner_worldPosition, float width, float height, glm::vec3 color);
+    glm::vec2 blockToWorld(float blockRow, float blockColumn ) {
+        return {worldStartX + (blockColumn + 1) * stripe + blockColumn * blockWidth,
+                         worldStartY + (blockRow + 1) * stripe + blockRow * blockWidth};
+    }
     glm::vec2 worldToScreen(glm::vec2);
+    //delete move constructor
+    Render(Render&&) = delete;
+    //delete move assignment
+    Render& operator=(Render&&) = delete;
+
+    const unsigned int stripe = 2, blockWidth = 30;
+    unsigned int worldStartX = 200, worldStartY = 100;
 private:
+    GLFWkeyfun key_callback;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
     struct QueueFamilyIndices {
@@ -100,11 +127,8 @@ private:
             return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
-
-
-
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    VertexVector vertices;
+    IndexVector indices;
     vk::Buffer indexBuffer;
     vk::DeviceMemory indexBufferMemory;
     vk::Buffer vertexBuffer;

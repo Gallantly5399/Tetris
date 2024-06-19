@@ -4,7 +4,7 @@
 
 #include "Block.h"
 
-std::optional<Block> Block::rotate(Grid grid) {
+bool Block::rotate(Grid grid) {
     Block temBlock = *this;
     unsigned int nextRotation = (rotation + 1) % 4;
     temBlock.rotate();
@@ -42,10 +42,10 @@ std::optional<Block> Block::rotate(Grid grid) {
             startRow += offsets[k].first;
             startColumn += offsets[k].second;
             this->rotate();
-            return temBlock;
+            return true;
         }
     }
-    return {};
+    return false;
 }
 
 Block::Block(BlockType type) : type(type) {
@@ -191,11 +191,17 @@ bool Block::moveDown(Grid grid) {
     return true;
 }
 
-std::pair<int, int> Block::getPosition() const {
+BlockPosition Block::getPosition() const {
     return {startRow, startColumn};
 }
 
 bool Block::touch(Grid grid) {
     const auto temShape = this->getShape();
     return false;
+}
+
+glm::vec3 Block::getColor() const{
+    if (type == BlockType::I) {
+
+    }
 }

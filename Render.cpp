@@ -17,28 +17,30 @@
 #include <cassert>
 #include <filesystem>
 
-static void frameBufferResizedCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<Render*>(glfwGetWindowUserPointer(window));
-    app->setFrameBufferResized(true);
-}
 
 Render::Render(GLFWkeyfun key_callback) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    SCREEN_WIDTH = 1600;
-    SCREEN_HEIGHT = 900;
+    SCREEN_WIDTH = 1200;
+    SCREEN_HEIGHT = 675;
+    vertices.data.resize(4000);
+    indices.data.resize(4000);
     window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tetris", nullptr, nullptr);
-    glfwSetWindowSizeCallback(window, frameBufferResizedCallback);
+//    glfwSetWindowSizeCallback(window, frameBufferResizedCallback);
+    this->key_callback = key_callback;
     glfwSetKeyCallback(window, key_callback);
     initVulkan();
 }
+
 void Render::resize(const unsigned int Screen_Width, const unsigned int Screen_Height) {
     SCREEN_WIDTH = Screen_Width;
     SCREEN_HEIGHT = Screen_Height;
     glfwSetWindowSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     recreateSwapChain();
 }
+
+
 Render::Render(const unsigned int Screen_Width, const unsigned int Screen_Height,  GLFWkeyfun key_callback) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -46,43 +48,19 @@ Render::Render(const unsigned int Screen_Width, const unsigned int Screen_Height
 //    glfwGetPrimaryMonitor()
     SCREEN_WIDTH = Screen_Width;
     SCREEN_HEIGHT  = Screen_Height;
+    vertices.data.resize(4000);
+    indices.data.resize(4000);
     window = glfwCreateWindow(Screen_Width, Screen_Height, "Tetris", nullptr, nullptr);
+
     glfwSetWindowUserPointer(window, this);
-    glfwSetWindowSizeCallback(window, frameBufferResizedCallback);
+    this->key_callback = key_callback;
+//    glfwSetWindowSizeCallback(window, frameBufferResizedCallback);
     glfwSetKeyCallback(window, key_callback);
 
     initVulkan();
 }
 
 Render::~Render() {
-    cleanup();
-}
-
-void Render::render(std::vector<Vertex> vertices_, std::vector<uint32_t> indices_){
-    vertices = vertices_;
-    indices = indices_;
-    createVertexBuffers();
-    createIndexBuffer();
-    glfwPollEvents();
-    drawFrame();
-}
-
-void Render::initVulkan() {
-    createInstance();
-    createSurface();
-    pickPhysicalDevice();
-    createLogicalDevice();
-    createSwapChain();
-    createImageViews();
-    createRenderPass();
-    createGraphicsPipeline();
-    createFramebuffers();
-    createCommandPool();
-    createCommandBuffers();
-    createSyncObjects();
-}
-
-void Render::cleanup() {
     device.waitIdle();
     cleanupSwapChain();
     device.destroy(indexBuffer);
@@ -103,6 +81,29 @@ void Render::cleanup() {
     instance.destroy();
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+//void Render::render(std::vector<Vertex> vertices_, std::vector<uint32_t> indices_){
+//    vertices = vertices_;
+//    indices = indices_;
+//    createVertexBuffers();
+//    createIndexBuffer();
+//    drawFrame();
+//}
+
+void Render::initVulkan() {
+    createInstance();
+    createSurface();
+    pickPhysicalDevice();
+    createLogicalDevice();
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createGraphicsPipeline();
+    createFramebuffers();
+    createCommandPool();
+    createCommandBuffers();
+    createSyncObjects();
 }
 
 void Render::createInstance() {
@@ -516,7 +517,7 @@ void Render::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t image
     vk::DeviceSize  offset{0};
     commandBuffer.bindVertexBuffers(0, 1, &vertexBuffer, &offset);
     commandBuffer.bindIndexBuffer(indexBuffer, offset, vk::IndexType::eUint32);
-    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
+    commandBuffer.drawIndexed(indices.data.size(), 1, 0, 0, 0);
     commandBuffer.endRenderPass();
 
     commandBuffer.end();
@@ -612,7 +613,7 @@ void Render::createVertexBuffers() {
     static vk::DeviceSize size;
     if (!firstDrawVertex) {
         firstDrawVertex = true;
-        vk::BufferCreateInfo createInfo({}, sizeof(vertices[0]) * vertices.size(),
+        vk::BufferCreateInfo createInfo({}, sizeof(vertices.data[0]) * vertices.data.size(),
                                         vk::BufferUsageFlagBits::eVertexBuffer,
                                         vk::SharingMode::eExclusive);
         size = createInfo.size;
@@ -626,9 +627,9 @@ void Render::createVertexBuffers() {
         vertexBufferMemory = device.allocateMemory(allocateInfo);
         device.bindBufferMemory(vertexBuffer, vertexBufferMemory, 0);
     }
-    void *data =  device.mapMemory(vertexBufferMemory, 0, size, {});
-    memcpy(data, vertices.data(), static_cast<size_t>(size));
-    device.unmapMemory(vertexBufferMemory);
+    static void *data =  device.mapMemory(vertexBufferMemory, 0, size, {});
+    memcpy(data, vertices.data.data(), static_cast<size_t>(size));
+//    device.unmapMemory(vertexBufferMemory);
 
 }
 
@@ -698,7 +699,10 @@ void Render::createIndexBuffer() {
     if (!firstDrawIndex) {
         firstDrawIndex = true;
 //        std::cout << "indices size" << indices.size() << std::endl;
-        vk::BufferCreateInfo createInfo({}, sizeof(indices[0]) * indices.size(),
+#ifndef NDEBUG
+std::cout << "indices size" << indices.data.size() << std::endl;
+#endif
+        vk::BufferCreateInfo createInfo({}, sizeof(indices.data[0]) * indices.data.size(),
                                         vk::BufferUsageFlagBits::eIndexBuffer,
                                         vk::SharingMode::eExclusive);
         size = createInfo.size;
@@ -712,7 +716,52 @@ void Render::createIndexBuffer() {
         device.bindBufferMemory(indexBuffer, indexBufferMemory, 0);
     }
 //    std::cout << size << std::endl;
-    void *data = device.mapMemory(indexBufferMemory, 0, size, {});
-    memcpy(data, indices.data(), size);
-    device.unmapMemory(indexBufferMemory);
+    static void *data = device.mapMemory(indexBufferMemory, 0, size, {});
+    memcpy(data, indices.data.data(), size);
+//    device.unmapMemory(indexBufferMemory);
 }
+
+void Render::render() {
+    createVertexBuffers();
+    createIndexBuffer();
+    drawFrame();
+}
+
+void Render::inputCube(glm::vec2 leftCorner_worldPosition, float width, float height, glm::vec3 color) {
+    glm::vec2 leftBottom = worldToScreen(leftCorner_worldPosition);
+    glm::vec2 leftTop = worldToScreen({leftCorner_worldPosition.x, leftCorner_worldPosition.y + height});
+    glm::vec2 rightBottom = worldToScreen({leftCorner_worldPosition.x + width, leftCorner_worldPosition.y});
+    glm::vec2 rightTop = worldToScreen({leftCorner_worldPosition.x + width, leftCorner_worldPosition.y + height});
+    auto output = [&](glm::vec2 pos) {
+        //
+#ifndef NDEBUG
+        std::cout << pos.x << ' ' << pos.y << std::endl;
+#endif
+    };
+//    output(leftBottom);
+//    output(leftTop);
+//    output(rightBottom);
+//    output(rightTop);
+
+    //-4
+    vertices.push_back({leftBottom, color});
+    //-3
+    vertices.push_back({leftTop, color});
+    //-2
+    vertices.push_back({rightBottom, color});
+
+    //-2
+//    vertices.push_back({rightBottom, glm::vec3(1.0f, 1.0f, 1.0f)});
+    //-3
+//    vertices.push_back({leftTop, glm::vec3(1.0f, 1.0f, 1.0f)});
+    //-1
+    vertices.push_back({rightTop, color});
+
+    indices.push_back(vertices.index - 4);
+    indices.push_back(vertices.index - 3);
+    indices.push_back(vertices.index - 2);
+    indices.push_back(vertices.index - 2);
+    indices.push_back(vertices.index - 3);
+    indices.push_back(vertices.index - 1);
+}
+
