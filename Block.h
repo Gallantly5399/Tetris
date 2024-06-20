@@ -52,7 +52,15 @@ public:
     bool moveLeft(const Grid& grid);
     bool moveRight(const Grid& grid);
     bool moveDown(const Grid& grid);
-
+    void setStartRow(int row) {
+        startRow = row;
+    }
+    BlockType getType() const {
+        return type;
+    }
+    void setStartColumn(int column) {
+        startColumn = column;
+    }
     Block() {
         type = BlockType::O;
     }

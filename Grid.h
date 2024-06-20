@@ -73,6 +73,7 @@ public:
                 }
             }
         }
+        return lines;
     }
 
 private:
