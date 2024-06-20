@@ -4,25 +4,28 @@
 
 #include "Grid.h"
 #include <iostream>
-bool Grid::isOccupied(int row, int column) {
+bool Grid::isOccupied(int row, int column) const{
     if (row < 0 || row >= grid.size() || column < 0 || column >= grid[0].size()) return true;
-    return grid[row][column] == 1;
+    return grid[row][column];
 }
 
-Grid::Grid(int width, int height) {
-    grid.resize(width);
+Grid::Grid(int width, int height): width(width), height(height){
+    grid.resize(height);
     for(auto &i : grid) {
-        i.resize(height);
+        i.resize(width);
         for (int &j : i) j = 0;
-//        std::cout << std::endl;
     }
-    colors.resize(width);
+    colors.resize(height);
     for (auto &i : colors) {
-        i.resize(height);
-        for (auto &j : i) j = glm::vec3(0.0f);
+        i.resize(width);
+        for (auto &j : i) j = sf::Color{0x000000};
     }
 }
+
 void Grid::resize(int width, int height) {
+    this->width = width;
+    this->height = height;
+
     grid.resize(width);
     for (auto &i : grid) {
         i.resize(height);
@@ -31,11 +34,11 @@ void Grid::resize(int width, int height) {
     colors.resize(width);
     for (auto &i : colors) {
         i.resize(height);
-        for (auto &j : i) j = glm::vec3(0.0f);
+        for (auto &j : i) j = sf::Color{0x000000};
     }
 }
 
-void Grid::insertBlock(const std::vector<std::vector<int>>& shape, glm::vec3 color, int startRow, int startColumn) {
+void Grid::insertBlock(const std::vector<std::vector<int>>& shape, sf::Color color, int startRow, int startColumn) {
     for (int i = 0; i < shape.size(); i++) {
         for (int j = 0; j < shape[i].size(); j++) {
             if (shape[i][j] == 1) {

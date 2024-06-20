@@ -12,32 +12,8 @@
 #endif
 #include "Grid.h"
 #include "GLFW/glfw3.h"
+#include <SFML/Graphics.hpp>
 
-const static std::array<std::array<std::array<int,2>, 5>, 4> RotationOffsetI {
-        0, 0, -1, 0, 2, 0, -1, 0, 2, 0,
-        -1, 0,  0, 0, 0, 0, 0, 1, 0, -2,
-        -1, 1, 1, 1, -2, 1, 1, 0, -2, 0,
-        0, 1, 0, 1, 0, 1, 0, -1, 0, 2
-};
-
-const static std::array<std::array<std::array<int,2>, 1>, 4> RotationOffsetO {
-        0, 0,
-        0, -1,
-        -1, -1,
-        -1, 0
-};
-
-const static std::array<std::array<std::array<int,2>, 5>, 4> RotationOffsetJ {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 0, 1, -1, 0, 2, 1, 2,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, -1, 0, -1, 1, 0, 2, -1, 2
-};
-
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetL = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetS = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetZ = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetT = RotationOffsetJ;
 
 enum class BlockType{
     O = 0,
@@ -68,14 +44,14 @@ public:
 
     Block(BlockType type);
     //rotate if valid
-    bool rotate(Grid grid);
+    bool rotate(const Grid& grid);
 
     //just rotate in the local coordinate
     void rotate();
     BlockPosition getPosition() const;
-    bool moveLeft(Grid grid);
-    bool moveRight(Grid grid);
-    bool moveDown(Grid grid);
+    bool moveLeft(const Grid& grid);
+    bool moveRight(const Grid& grid);
+    bool moveDown(const Grid& grid);
 
     Block() {
         type = BlockType::O;
@@ -91,9 +67,30 @@ public:
     //return shape
     const std::vector<std::vector<int>>& getShape() const;
 
-    glm::vec3 getColor() const;
-    bool touch(Grid grid);
+    sf::Color getColor() const;
+    bool touch(const Grid& grid);
 
+    //FIXME:: maybe something wrong
+    std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const {
+        row += startRow;
+        column += startColumn;
+        int posX = startPosX + column * (blockWidth + stripeWidth);
+        int posY = startPosY + row * (blockWidth + stripeWidth);
+        if (startFromLeftTop) {
+            posY += blockWidth + stripeWidth;
+        }
+        if (reverseY) {
+            posY = screenHeight - posY;
+        }
+        return {posX, posY};
+    }
+    int getStartRow() const {
+        return startRow;
+    }
+
+    int getStartColumn() const {
+        return startColumn;
+    }
     void output() {
 #ifndef NDEBUG
         for (int i = shape.size() - 1;i >= 0;i --) {
@@ -109,7 +106,7 @@ public:
 private:
     std::vector<std::vector<int>> shape;
     BlockType type;
-    glm::vec3 color;
+    sf::Color color;
     int startRow = 0;
     int startColumn = 0;
     unsigned int rotation = 0;
