@@ -6,7 +6,7 @@ Cmake
 
 SFML
 
-## Install
+## Build
 ```
 cmake -B build -S .
 cmake --build build
