@@ -300,9 +300,6 @@ int main() {
             if (isLockDelay && !isHardDrop) {
                 if (isTouchedGround) {
                     lockDelayTime += passedTime;
-#ifndef NDEBUG
-                    std::cout << "Lock Delay Time:" << time << std::endl;
-#endif
                     if (lockDelayTime >= 0.5 || movement >= 10) {
                         insertBlock(grid, block);
                         block = generator.nextBlock();
