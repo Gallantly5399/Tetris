@@ -6,7 +6,6 @@
 #include <vector>
 #include <array>
 #include <optional>
-#include <glm/glm.hpp>
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -76,7 +75,7 @@ public:
     const std::vector<std::vector<int>>& getShape() const;
 
     sf::Color getColor() const;
-    bool touch(const Grid& grid);
+    bool touch(const Grid& grid) const;
 
     //FIXME:: maybe something wrong
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const {

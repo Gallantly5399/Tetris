@@ -1,15 +1,3 @@
-#include "vulkan/vulkan.h"
-
-#define GLFW_INCLUDE_VULKAN
-
-#include "GLFW/glfw3.h"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-#include "glm/vec4.hpp"
-#include "glm/mat4x4.hpp"
-
 #include <iostream>
 
 #include "Block.h"
@@ -18,6 +6,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <random>
+#include "Gravity.h"
 
 //SFML coordinate system
 // -----------x
@@ -198,71 +187,38 @@ void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBloc
         drawBlock(temBlock, window, blockWidth, stripeWidth, currentPosX, currentPosY);
     }
 }
-//Gravity System
-//control the speed of the block
-class Gravity {
-public:
-    Gravity() {
-        preLevel = 1;
-        level = 1;
-        updateFallTime();
-    }
-    //when press Key S enable slow drop mode
-
-    void setSlowDrop() {
-        level += 5;
-        level = std::max(level, 20);
-        updateFallTime();
-    }
-    void reset() {
-        this->level = preLevel;
-        updateFallTime();
-    }
-
-    void levelUp() {
-        this->level ++;
-        preLevel = level;
-        updateFallTime();
-    }
-
-    //return seconds
-    void updateFallTime() {
-        fallTime = std::pow((0.8-((level-1)*0.007)), (level-1));
-    }
-
-    double getFallTime() const {
-        return fallTime;
-    }
-private:
-    int preLevel = 1;
-    int level = 1;
-    double fallTime = 0;
-};
 int main() {
-    Gravity gravity{};
+    Gravity gravity(10);
     unsigned long long score = 0;
     unsigned long long level = 1;
     unsigned long long totalClearedLines = 0;
     unsigned long long linesToUpdate = 0;
-    int nextCount = 5;
+    const int nextCount = 5;
     std::array<int, 5> scores = {0, 100, 300, 500, 800};
     Generator generator{};
     const int blockWidth = 30, stripeWidth = 1;
     Grid grid(10, 22);
-//    grid.fill(0, 0, sf::Color::Blue);
-//    grid.fill(0, 1, sf::Color::Blue);
-//    grid.fill(0, 2, sf::Color::Blue);
-//    grid.fill(1, 1, sf::Color::Blue);
+
     Block block = generator.nextBlock();
     sf::RenderWindow window(sf::VideoMode(1200, 675), "Tetris");
-//    window.setFramerateLimit(60);
+    window.setFramerateLimit(60);
     const int startPosX = 200, startPosY = 25;
     auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
     std::cout << "px: "<< px << ", py: " << py << std::endl;
     std::cout << "StartRow: " << block.getStartRow() << ", StartColumn: " << block.getStartColumn() << std::endl;
-    window.setFramerateLimit(60);
     sf::Clock clock;
     double time = 0;
+
+    //FIXME::block movement is not smooth
+//    window.setKeyRepeatEnabled(false);
+
+    /*TODO::Every movement will update the lockDelay status
+     * and the maximum movement is 10
+     */
+    sf::Clock lockDelayClock;
+    double lockDelayTime = 0;
+    bool isTouchedGround = false;
+    bool isLockDelay = true;
     while (window.isOpen()) {
 //        std::cout << gravity.getFallTime() << std::endl;
         double passedTime = clock.restart().asSeconds();
@@ -272,12 +228,9 @@ int main() {
             block.moveDown(grid);
             time = 0;
         }
-        gravity.reset();
         //timer
-
         //key events
         sf::Event event;
-
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
@@ -305,33 +258,63 @@ int main() {
 #ifndef NDEBUG
                     std::cout << "pressed A\n";
 #endif
-                    bool state = block.moveLeft(grid);
-                    if (state) {
-                        std::cout << "move to left\n";
-                    }
+//                    bool state = block.moveLeft(grid);
+//                    if (state) {
+//                        std::cout << "move to left\n";
+//                    }
                     //move the block to the left
                 } else if (event.key.scancode == sf::Keyboard::Scan::D) {
 #ifndef NDEBUG
                     std::cout << "pressed D\n";
 #endif
-                        block.moveRight(grid);
+//                    block.moveRight(grid);
 //                    bool state = block.moveRight(grid);
 //                    if (state) {
 //                        std::cout << "move to Right\n";
 //                    }
                     //move the block to the right
                 } else if (event.key.scancode == sf::Keyboard::Scan::S) {
-                    gravity.setSlowDrop();
+                    gravity.setSoftDrop();
                     //move the block down
                     //add the gravity level
                 }
+            } else if (event.type == sf::Event::KeyReleased) {
+                if (event.key.scancode == sf::Keyboard::Scan::S) {
+                    gravity.reset();
+                }
             }
         }
-
-        //TODO:: add time delay 0.5s or 30frames
+        //TODO:: add lock delay 0.5s and maximum movement of 10
         if (block.touch(grid)) {
-            insertBlock(grid, block);
-            block = generator.nextBlock();
+            if (isLockDelay) {
+                if (isTouchedGround) {
+                    lockDelayTime += passedTime;
+#ifndef NDEBUG
+                    std::cout << "Lock Delay Time:" << time << std::endl;
+#endif
+                    if (lockDelayTime >= 0.5) {
+#ifndef NDEBUG
+                        std::cout << "Lock Delay Time:" << time << std::endl;
+#endif
+                        insertBlock(grid, block);
+                        block = generator.nextBlock();
+                        gravity.reset();
+                    }
+                } else {
+                    lockDelayTime = 0;
+                    isTouchedGround = true;
+                }
+            }
+            else {
+                insertBlock(grid, block);
+                block = generator.nextBlock();
+                gravity.reset();
+            }
+        } else {
+#ifndef NDEBUG
+            std::cout << "Is Not Touching the Groud" << std::endl;
+#endif
+            isTouchedGround = false;
         }
         if (grid.exceed()) {
             //TODO:: game over
@@ -356,7 +339,7 @@ int main() {
         drawMainWindowBackground(window, startPosX, startPosY, 310, 670, SCREEN_WIDTH, SCREEN_HEIGHT);
         int nextWidth = 155, nextHeight = nextCount * 92;
         drawNextWindowBackground(window, 525, 640 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
-        drawNextBlocks(window, generator.seeNextBlocks(5), 550, 625, blockWidth, stripeWidth);
+        drawNextBlocks(window, generator.seeNextBlocks(nextCount), 550, 625, blockWidth, stripeWidth);
 #ifndef NDEBUG
 //        auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
 //        std::cout << "px: "<< px << ", py: " << py << std::endl;

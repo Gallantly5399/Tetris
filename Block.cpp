@@ -102,49 +102,49 @@ Block::Block(BlockType type) : type(type) {
                  {0, 0, 0, 0, 0}};
         startRow = 18;
         startColumn = 2;
-        color = sf::Color{0x00ffffff};
+        color = sf::Color{0x81d8d0ff};
     } else if (type == BlockType::J) {
         shape = {{0, 0, 0},
                  {1, 1, 1},
                  {1, 0, 0}};
         startRow = 19;
         startColumn = 3;
-        color =sf::Color{0x0000ffff};
+        color = sf::Color{0x00dcffff};
     } else if (type == BlockType::L) {
         shape = {{0, 0, 0},
                  {1, 1, 1},
                  {0, 0, 1}};
         startRow = 19;
         startColumn = 3;
-        color = sf::Color{0xff7f00ff};
+        color = sf::Color{0xff9943ff};
     } else if (type == BlockType::O) {
         shape = {{0, 0, 0},
                  {0, 1, 1},
                  {0, 1, 1}};
         startRow = 19;
         startColumn = 3;
-        color = sf::Color{0xffff00ff};
+        color = sf::Color{0xe2c000ff};
     } else if (type == BlockType::S) {
         shape = {{0, 0, 0},
                  {1, 1, 0},
                  {0, 1, 1}};
         startRow = 19;
         startColumn = 3;
-        color = sf::Color{0x00ff00ff};
+        color = sf::Color{0x80e5aaff};
     } else if (type == BlockType::T) {
         shape = {{0, 0, 0},
                  {1, 1, 1},
                  {0, 1, 0}};
         startRow = 19;
         startColumn = 3;
-        color = sf::Color{0x800080ff};
+        color = sf::Color{0xc6aaeeff};
     } else if (type == BlockType::Z) {
         shape = {{0, 0, 0},
                  {0, 1, 1},
                  {1, 1, 0}};
         startRow = 19;
         startColumn = 3;
-        color = sf::Color{0xff0000ff};
+        color = sf::Color{0xff97cfff};
     }
 }
 
@@ -254,7 +254,7 @@ BlockPosition Block::getPosition() const {
     return {startRow, startColumn};
 }
 
-bool Block::touch(const Grid& grid) {
+bool Block::touch(const Grid& grid) const {
     const auto temShape = this->getShape();
     for (int row = 0; row < temShape.size(); row++) {
         for (int column = 0; column < temShape[row].size(); column++) {
