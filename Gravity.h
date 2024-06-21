@@ -23,11 +23,13 @@ public:
 
     //return seconds
     double getFallTime() const;
-
+    void setHardDrop();
     int getLevel() const;
 
+    void addLines(int lines);
 private:
     int level = 1;
     double fallTime = 0;
     bool isSoftDrop = false;
+    int clearedLines = 0;
 };

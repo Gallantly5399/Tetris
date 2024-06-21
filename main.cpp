@@ -215,6 +215,8 @@ int main() {
      * and the maximum movement is 10
      */
     //TODO:: add harddrop
+    //TODO:: T-spin
+
     sf::Clock lockDelayClock;
     double lockDelayTime = 0;
     bool isTouchedGround = false;
@@ -253,13 +255,6 @@ int main() {
 
 
     while (window.isOpen()) {
-        double passedTime = clock.restart().asSeconds();
-        time += passedTime;
-        if (time >= gravity.getFallTime()) {
-            block.moveDown(grid);
-            time = 0;
-        }
-        //timer
         //key events
         bool isHardDrop = false;
         sf::Event event;
@@ -269,51 +264,20 @@ int main() {
                 window.close();
             else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-#ifndef NDEBUG
-                    std::cout << "pressed escape\n";
-#endif
                     window.close();
                 } else if (event.key.scancode == sf::Keyboard::Scan::W) {
-#ifndef NDEBUG
-                    std::cout << "pressed W\n";
-#endif
                     bool state = block.rotate(grid);
-                    if (isTouchedGround) movement ++, lockDelayTime = 0;
-#ifndef NDEBUG
-                    if (state) {
-                        std::cout << "rotated\n";
-                        std::cout << "StartRow: " << block.getStartRow() << ", StartColumn: " << block.getStartColumn() << std::endl;
-                        auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
-                        std::cout << "Screen PosX:" << px << ", Screen PosY:" << py << std::endl;
-                    }
-#endif
+                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
                     //rotate the block
                 } else if (event.key.scancode == sf::Keyboard::Scan::A) {
-                    std::cout << "pressed A\n";
-                    block.moveLeft(grid);
-                    if (isTouchedGround) movement ++, lockDelayTime = 0;
-//                    bool state = block.moveLeft(grid);
-//                    if (state) {
-//                        std::cout << "move to left\n";
-//                    }
-                    //move the block to the left
+                    bool state = block.moveLeft(grid);
+                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
                 } else if (event.key.scancode == sf::Keyboard::Scan::D) {
-#ifndef NDEBUG
-                    std::cout << "pressed D\n";
-#endif
-                    block.moveRight(grid);
-                    if (isTouchedGround) movement ++, lockDelayTime = 0;
-//                    bool state = block.moveRight(grid);
-//                    if (state) {
-//                        std::cout << "move to Right\n";
-//                    }
-                    //move the block to the right
+                    bool state = block.moveRight(grid);
+                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
                 } else if (event.key.scancode == sf::Keyboard::Scan::S) {
                     gravity.setSoftDrop();
-                    //move the block down
-                    //add the gravity level
                 } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
-//                    gravity.setHardDrop();
                     isHardDrop = true;
                 }
             } else if (event.type == sf::Event::KeyReleased) {
@@ -322,6 +286,15 @@ int main() {
                 }
             }
         }
+
+        //TODO:: refactor block score api
+        double passedTime = clock.restart().asSeconds();
+        time += passedTime;
+        if (time >= gravity.getFallTime()) {
+            block.moveDown(grid);
+            time = 0;
+        }
+
         Block transparentBlock = block.getTransparentBlock();
         while(transparentBlock.moveDown(grid));
         //TODO:: add lock delay 0.5s and maximum movement of 10
@@ -334,8 +307,6 @@ int main() {
                     std::cout << "Lock Delay Time:" << time << std::endl;
 #endif
                     if (lockDelayTime >= 0.5 || movement >= 10) {
-                        std::cout << "Lock Delay Time:" << time << std::endl;
-                        std::cout << "Movement:" << movement << std::endl;
                         insertBlock(grid, block);
                         block = generator.nextBlock();
                         gravity.unsetSoftDrop();
@@ -360,21 +331,16 @@ int main() {
         }
         //TODO add level
         int clearedLines = grid.clearLines();
-        totalClearedLines += clearedLines;
-        linesToUpdate += clearedLines;
+        gravity.addLines(clearedLines);
         score += scores[clearedLines] * gravity.getLevel();
-        if (linesToUpdate >= 10 * gravity.getLevel()) {
-            linesToUpdate -= 10 * gravity.getLevel();
-            gravity.unsetSoftDrop();
-            gravity.levelUp();
-        }
 
         //Text Level and Score
         textLevelNumber.setString(std::to_string(gravity.getLevel()));
         if (gravity.getLevel() >= 10) textLevelNumber.setPosition(715, 50);
         else textLevelNumber.setPosition(730, 50);
-        if (score >= 100) textScoreNumber.setPosition(700, 120);
-        else if(score >= 10) textScoreNumber.setPosition(715, 120);
+        if (score >= 1000) textScoreNumber.setPosition(700, 120);
+        else if (score >= 100) textScoreNumber.setPosition(710, 120);
+        else if(score >= 10) textScoreNumber.setPosition(720, 120);
         else textScoreNumber.setPosition(730, 120);
         textScoreNumber.setString(std::to_string(score));
 

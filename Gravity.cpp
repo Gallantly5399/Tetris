@@ -45,3 +45,11 @@ Gravity::Gravity(int level) {
 int Gravity::getLevel() const{
     return level;
 }
+
+void Gravity::addLines(int lines) {
+    clearedLines += lines;
+    if (clearedLines >= 10 * level) {
+        levelUp();
+    }
+}
+
