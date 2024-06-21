@@ -36,9 +36,6 @@ const unsigned int SCREEN_WIDTH = 1200, SCREEN_HEIGHT = 675;
 //    return glm::vec2((1.0f * x / SCREEN_WIDTH - 0.5) * 2, ((1 - 1.0f * y /SCREEN_HEIGHT) -0.5)  * 2);
 //}
 
-void output(glm::vec2 pos) {
-    std::cout << pos.x << ' ' << pos.y << std::endl;
-}
 
 void drawGrid(const Grid& grid, sf::RenderWindow &window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
     for (int column = 0; column < grid.getWidth(); column++) {
@@ -84,9 +81,6 @@ public:
         std::shuffle(nextBlocks.begin() + 7, nextBlocks.begin() + 14, gen);
     }
     Block nextBlock() {
-#ifndef NDEBUG
-        std::cout << "Current Next Block Index: " << index << std::endl;
-#endif
         if (index == 7) {
             std::shuffle(nextBlocks.begin(), nextBlocks.begin() + 7, gen);
         }
@@ -143,10 +137,12 @@ void drawMainWindowBackground(sf::RenderWindow& window, int startPosX, int start
     sf::Vertex lineBottom[] = {leftBottom, rightBottom};
     sf::Vertex lineLeft[] = {leftBottom, leftTop};
     sf::Vertex lineRight[] = {rightBottom, rightTop};
+    sf::Vertex lineTop[] = {leftTop, rightTop};
 
     window.draw(lineBottom, 2, sf::Lines);
     window.draw(lineLeft, 2, sf::Lines);
     window.draw(lineRight, 2, sf::Lines);
+    window.draw(lineTop, 2, sf::Lines);
 }
 
 void drawNextWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY, int width, int height, int windowWidth, int windowHeight, bool reverseY = true) {
@@ -189,6 +185,7 @@ void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBloc
 }
 int main() {
     Gravity gravity(1);
+//    gravity.setNoGravity();
     unsigned long long score = 0;
     unsigned long long totalClearedLines = 0;
     unsigned long long linesToUpdate = 0;
@@ -200,11 +197,11 @@ int main() {
 
     Block block = generator.nextBlock();
     sf::RenderWindow window(sf::VideoMode(1200, 675), "Tetris");
-    window.setFramerateLimit(60);
+//    window.setFramerateLimit(60);
     const int startPosX = 200, startPosY = 25;
     auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
-    std::cout << "px: "<< px << ", py: " << py << std::endl;
-    std::cout << "StartRow: " << block.getStartRow() << ", StartColumn: " << block.getStartColumn() << std::endl;
+//    std::cout << "px: "<< px << ", py: " << py << std::endl;
+//    std::cout << "StartRow: " << block.getStartRow() << ", StartColumn: " << block.getStartColumn() << std::endl;
     sf::Clock clock;
     double time = 0;
 
@@ -216,7 +213,8 @@ int main() {
      */
     //TODO:: add harddrop
     //TODO:: T-spin
-
+    //TODO:: add counter-clockwise rotation
+    //TODO:: block.moveDown() optimization
     sf::Clock lockDelayClock;
     double lockDelayTime = 0;
     bool isTouchedGround = false;
@@ -253,13 +251,12 @@ int main() {
     textScoreNumber.setCharacterSize(24);
     textScoreNumber.setPosition(730, 120);
 
-
     while (window.isOpen()) {
         //key events
         bool isHardDrop = false;
         sf::Event event;
         while (window.pollEvent(event)) {
-            std::cout << gravity.getFallTime() << std::endl;
+//            std::cout << gravity.getFallTime() << std::endl;
             if (event.type == sf::Event::Closed)
                 window.close();
             else if (event.type == sf::Event::KeyPressed) {
@@ -351,9 +348,12 @@ int main() {
 
         drawGrid(grid, window, blockWidth, stripeWidth, startPosX, startPosY);
         //TODO:: make magic number to constant
-        drawMainWindowBackground(window, startPosX, startPosY, 310, 670, SCREEN_WIDTH, SCREEN_HEIGHT);
+        //draw the main window
+        //310 670
+        drawMainWindowBackground(window, startPosX, startPosY, 310, startPosY + 594, SCREEN_WIDTH, SCREEN_HEIGHT);
         int nextWidth = 155, nextHeight = nextCount * 92;
-        drawNextWindowBackground(window, 525, 640 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
+        //startPos(525, 640 - nextHeight)
+        drawNextWindowBackground(window, 525, 644 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
         drawNextBlocks(window, generator.seeNextBlocks(nextCount), 550, 625, blockWidth, stripeWidth);
         window.draw(textLevel);
         window.draw(textLevelNumber);

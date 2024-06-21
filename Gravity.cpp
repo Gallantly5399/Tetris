@@ -29,6 +29,7 @@ double Gravity::getFallTime() const {
         int tempLevel = std::min(level + 5, 19);
         return std::pow((0.8-((tempLevel + 5-1)*0.007)), (tempLevel + 5-1));
     }
+    if (noGravity) return std::numeric_limits<double>::max();
     return fallTime;
 }
 
@@ -51,5 +52,9 @@ void Gravity::addLines(int lines) {
     if (clearedLines >= 10 * level) {
         levelUp();
     }
+}
+
+void Gravity::setNoGravity() {
+    noGravity = true;
 }
 
