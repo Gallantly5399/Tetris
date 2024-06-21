@@ -66,11 +66,6 @@ bool Block::rotate(const Grid& grid) {
                                  RotationOffsetJ[nextRotation][i][1] - RotationOffsetJ[rotation][i][1]);
         }
     }
-#ifndef NDEBUG
-    for (auto &i :offsets) {
-        std::cout << "Offset: " << i.first << " " << i.second << std::endl;
-    }
-#endif
     for (int k = 0; k < offsets.size(); k++) {
         bool flag = true;
         for (int row = 0; row < temShape.size(); row++) {
@@ -239,9 +234,6 @@ bool Block::moveDown(const Grid& grid) {
     for (int i = 0; i < temShape.size(); i++) {
         for (int j = 0; j < temShape[i].size(); j++) {
             if (temShape[i][j] == 1 && grid.isOccupied(currentRow + i, currentColumn + j)) {
-#ifndef NDEBUG
-                std::cout << "currentRow: " << currentRow << ", currentColumn: " << currentColumn << " is oOccupied" << std::endl;
-#endif
                 return false;
             }
         }

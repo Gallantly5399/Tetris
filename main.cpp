@@ -7,6 +7,7 @@
 #include <SFML/Graphics.hpp>
 #include <random>
 #include "Gravity.h"
+#include <filesystem>
 
 //SFML coordinate system
 // -----------x
@@ -23,7 +24,6 @@
 // |
 // |
 // -----------x
-
 static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
@@ -188,13 +188,12 @@ void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBloc
     }
 }
 int main() {
-    Gravity gravity(10);
+    Gravity gravity(1);
     unsigned long long score = 0;
-    unsigned long long level = 1;
     unsigned long long totalClearedLines = 0;
     unsigned long long linesToUpdate = 0;
     const int nextCount = 5;
-    std::array<int, 5> scores = {0, 100, 300, 500, 800};
+    std::array<int, 5> scores = {0, 1, 3, 5, 8};
     Generator generator{};
     const int blockWidth = 30, stripeWidth = 1;
     Grid grid(10, 22);
@@ -215,24 +214,57 @@ int main() {
     /*TODO::Every movement will update the lockDelay status
      * and the maximum movement is 10
      */
+    //TODO:: add harddrop
     sf::Clock lockDelayClock;
     double lockDelayTime = 0;
     bool isTouchedGround = false;
     int movement = 0;
     bool isLockDelay = true;
+    sf::Font font;
+    std::filesystem::path fontsPath = std::filesystem::path(FILE_LOCATION) / "resources" / "fonts";
+    if (!font.loadFromFile((fontsPath / "scoreFont.ttf").string())) {
+        std::cerr << "Failed to load font\n";
+        return 1;
+    }
+    //text level
+    sf::Text textLevel;
+    textLevel.setFont(font);
+    textLevel.setString("Level");
+    textLevel.setCharacterSize(24);
+    textLevel.setPosition(700, 25);
+
+    sf::Text textLevelNumber;
+    textLevelNumber.setFont(font);
+    textLevelNumber.setCharacterSize(24);
+    //1
+    textLevelNumber.setPosition(730, 50);
+    //10
+//    textLevelNumber.setPosition(715, 50);
+    sf::Text textScore;
+    textScore.setFont(font);
+    textScore.setString("Score");
+    textScore.setCharacterSize(24);
+    textScore.setPosition(700, 100);
+
+    sf::Text textScoreNumber;
+    textScoreNumber.setFont(font);
+    textScoreNumber.setCharacterSize(24);
+    textScoreNumber.setPosition(730, 120);
+
+
     while (window.isOpen()) {
-//        std::cout << gravity.getFallTime() << std::endl;
         double passedTime = clock.restart().asSeconds();
         time += passedTime;
         if (time >= gravity.getFallTime()) {
-            std::cout << "Time1: " << time << std::endl;
             block.moveDown(grid);
             time = 0;
         }
         //timer
         //key events
+        bool isHardDrop = false;
         sf::Event event;
         while (window.pollEvent(event)) {
+            std::cout << gravity.getFallTime() << std::endl;
             if (event.type == sf::Event::Closed)
                 window.close();
             else if (event.type == sf::Event::KeyPressed) {
@@ -246,6 +278,7 @@ int main() {
                     std::cout << "pressed W\n";
 #endif
                     bool state = block.rotate(grid);
+                    if (isTouchedGround) movement ++, lockDelayTime = 0;
 #ifndef NDEBUG
                     if (state) {
                         std::cout << "rotated\n";
@@ -256,10 +289,9 @@ int main() {
 #endif
                     //rotate the block
                 } else if (event.key.scancode == sf::Keyboard::Scan::A) {
-#ifndef NDEBUG
                     std::cout << "pressed A\n";
                     block.moveLeft(grid);
-#endif
+                    if (isTouchedGround) movement ++, lockDelayTime = 0;
 //                    bool state = block.moveLeft(grid);
 //                    if (state) {
 //                        std::cout << "move to left\n";
@@ -270,6 +302,7 @@ int main() {
                     std::cout << "pressed D\n";
 #endif
                     block.moveRight(grid);
+                    if (isTouchedGround) movement ++, lockDelayTime = 0;
 //                    bool state = block.moveRight(grid);
 //                    if (state) {
 //                        std::cout << "move to Right\n";
@@ -279,30 +312,33 @@ int main() {
                     gravity.setSoftDrop();
                     //move the block down
                     //add the gravity level
+                } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
+//                    gravity.setHardDrop();
+                    isHardDrop = true;
                 }
             } else if (event.type == sf::Event::KeyReleased) {
                 if (event.key.scancode == sf::Keyboard::Scan::S) {
-                    gravity.reset();
+                    gravity.unsetSoftDrop();
                 }
             }
         }
         Block transparentBlock = block.getTransparentBlock();
         while(transparentBlock.moveDown(grid));
         //TODO:: add lock delay 0.5s and maximum movement of 10
+        if (isHardDrop) while(block.moveDown(grid));
         if (block.touch(grid)) {
-            if (isLockDelay) {
+            if (isLockDelay && !isHardDrop) {
                 if (isTouchedGround) {
                     lockDelayTime += passedTime;
 #ifndef NDEBUG
                     std::cout << "Lock Delay Time:" << time << std::endl;
 #endif
-                    if (lockDelayTime >= 0.5) {
-#ifndef NDEBUG
+                    if (lockDelayTime >= 0.5 || movement >= 10) {
                         std::cout << "Lock Delay Time:" << time << std::endl;
-#endif
+                        std::cout << "Movement:" << movement << std::endl;
                         insertBlock(grid, block);
                         block = generator.nextBlock();
-                        gravity.reset();
+                        gravity.unsetSoftDrop();
                     }
                 } else {
                     lockDelayTime = 0;
@@ -312,29 +348,35 @@ int main() {
             else {
                 insertBlock(grid, block);
                 block = generator.nextBlock();
-                gravity.reset();
+                gravity.unsetSoftDrop();
             }
         } else {
-#ifndef NDEBUG
-            std::cout << "Is Not Touching the Groud" << std::endl;
-#endif
             isTouchedGround = false;
+            movement = 0;
         }
         if (grid.exceed()) {
             //TODO:: game over
             window.close();
         }
-
         //TODO add level
         int clearedLines = grid.clearLines();
         totalClearedLines += clearedLines;
         linesToUpdate += clearedLines;
-        score += scores[clearedLines] * level;
-        if (linesToUpdate >= 10 * level) {
-            linesToUpdate -= 10 * level;
+        score += scores[clearedLines] * gravity.getLevel();
+        if (linesToUpdate >= 10 * gravity.getLevel()) {
+            linesToUpdate -= 10 * gravity.getLevel();
+            gravity.unsetSoftDrop();
             gravity.levelUp();
-            level++;
         }
+
+        //Text Level and Score
+        textLevelNumber.setString(std::to_string(gravity.getLevel()));
+        if (gravity.getLevel() >= 10) textLevelNumber.setPosition(715, 50);
+        else textLevelNumber.setPosition(730, 50);
+        if (score >= 100) textScoreNumber.setPosition(700, 120);
+        else if(score >= 10) textScoreNumber.setPosition(715, 120);
+        else textScoreNumber.setPosition(730, 120);
+        textScoreNumber.setString(std::to_string(score));
 
         window.clear(sf::Color::Black);
         drawBlock(block, window, blockWidth, stripeWidth, startPosX, startPosY);
@@ -347,6 +389,10 @@ int main() {
         int nextWidth = 155, nextHeight = nextCount * 92;
         drawNextWindowBackground(window, 525, 640 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
         drawNextBlocks(window, generator.seeNextBlocks(nextCount), 550, 625, blockWidth, stripeWidth);
+        window.draw(textLevel);
+        window.draw(textLevelNumber);
+        window.draw(textScore);
+        window.draw(textScoreNumber);
 #ifndef NDEBUG
 //        auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
 //        std::cout << "px: "<< px << ", py: " << py << std::endl;

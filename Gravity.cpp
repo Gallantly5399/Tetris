@@ -6,15 +6,12 @@
 #include <algorithm>
 
 void Gravity::setSoftDrop() {
-    level += 5;
-    level = std::max(level, 20);
-    updateFallTime();
+    isSoftDrop = true;
 }
 
 
-void Gravity::reset() {
-    this->level = preLevel;
-    updateFallTime();
+void Gravity::unsetSoftDrop() {
+    isSoftDrop = false;
 }
 
 void Gravity::updateFallTime() {
@@ -22,28 +19,29 @@ void Gravity::updateFallTime() {
 }
 
 void Gravity::levelUp() {
-    this->level ++;
-    level = std::max(level, 20);
-    preLevel = level;
+    level ++;
+    level = std::min(level, 19);
     updateFallTime();
 }
 
 double Gravity::getFallTime() const {
+    if (isSoftDrop) {
+        int tempLevel = std::min(level + 5, 19);
+        return std::pow((0.8-((tempLevel + 5-1)*0.007)), (tempLevel + 5-1));
+    }
     return fallTime;
 }
 
 Gravity::Gravity() {
-    preLevel = 1;
     level = 1;
     updateFallTime();
 }
 
 Gravity::Gravity(int level) {
-    preLevel = level;
     this->level = level;
     updateFallTime();
 }
 
-void Gravity::setHardDrop() {
-
+int Gravity::getLevel() const{
+    return level;
 }

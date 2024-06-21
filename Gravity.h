@@ -12,10 +12,8 @@ public:
     //when press Key S enable slow drop mode
     //set level += 5
     void setSoftDrop();
-    void setHardDrop();
-    //call after setSoftDrop and setHardDrop
-    //reset the level
-    void reset();
+
+    void unsetSoftDrop();
 
     //set level += 1
     void levelUp();
@@ -25,8 +23,11 @@ public:
 
     //return seconds
     double getFallTime() const;
+
+    int getLevel() const;
+
 private:
-    int preLevel = 1;
     int level = 1;
     double fallTime = 0;
+    bool isSoftDrop = false;
 };
