@@ -218,6 +218,7 @@ int main() {
     sf::Clock lockDelayClock;
     double lockDelayTime = 0;
     bool isTouchedGround = false;
+    int movement = 0;
     bool isLockDelay = true;
     while (window.isOpen()) {
 //        std::cout << gravity.getFallTime() << std::endl;
@@ -257,6 +258,7 @@ int main() {
                 } else if (event.key.scancode == sf::Keyboard::Scan::A) {
 #ifndef NDEBUG
                     std::cout << "pressed A\n";
+                    block.moveLeft(grid);
 #endif
 //                    bool state = block.moveLeft(grid);
 //                    if (state) {
@@ -267,7 +269,7 @@ int main() {
 #ifndef NDEBUG
                     std::cout << "pressed D\n";
 #endif
-//                    block.moveRight(grid);
+                    block.moveRight(grid);
 //                    bool state = block.moveRight(grid);
 //                    if (state) {
 //                        std::cout << "move to Right\n";
@@ -284,6 +286,8 @@ int main() {
                 }
             }
         }
+        Block transparentBlock = block.getTransparentBlock();
+        while(transparentBlock.moveDown(grid));
         //TODO:: add lock delay 0.5s and maximum movement of 10
         if (block.touch(grid)) {
             if (isLockDelay) {
@@ -334,6 +338,9 @@ int main() {
 
         window.clear(sf::Color::Black);
         drawBlock(block, window, blockWidth, stripeWidth, startPosX, startPosY);
+
+        drawBlock(transparentBlock, window, blockWidth, stripeWidth, startPosX, startPosY);
+
         drawGrid(grid, window, blockWidth, stripeWidth, startPosX, startPosY);
         //TODO:: make magic number to constant
         drawMainWindowBackground(window, startPosX, startPosY, 310, 670, SCREEN_WIDTH, SCREEN_HEIGHT);

@@ -23,6 +23,7 @@ void Gravity::updateFallTime() {
 
 void Gravity::levelUp() {
     this->level ++;
+    level = std::max(level, 20);
     preLevel = level;
     updateFallTime();
 }
@@ -41,4 +42,8 @@ Gravity::Gravity(int level) {
     preLevel = level;
     this->level = level;
     updateFallTime();
+}
+
+void Gravity::setHardDrop() {
+
 }

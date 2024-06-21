@@ -94,7 +94,11 @@ public:
     int getStartRow() const {
         return startRow;
     }
-
+    Block getTransparentBlock() const {
+        Block block = *this;
+        block.color.a = 0x44;
+        return block;
+    }
     int getStartColumn() const {
         return startColumn;
     }

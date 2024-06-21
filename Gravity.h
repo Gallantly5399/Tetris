@@ -12,7 +12,7 @@ public:
     //when press Key S enable slow drop mode
     //set level += 5
     void setSoftDrop();
-
+    void setHardDrop();
     //call after setSoftDrop and setHardDrop
     //reset the level
     void reset();
