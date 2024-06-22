@@ -76,6 +76,7 @@ public:
 
     sf::Color getColor() const;
     bool touch(const Grid& grid) const;
+    bool rotateCounterClockwise(const Grid& grid);
     void rotateCounterClockwise();
     //FIXME:: maybe something wrong
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const {

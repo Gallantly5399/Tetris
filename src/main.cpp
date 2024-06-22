@@ -276,6 +276,8 @@ int main() {
                     gravity.setSoftDrop();
                 } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
                     isHardDrop = true;
+                } else if (event.key.scancode == sf::Keyboard::Scan::Q) {
+                    block.rotateCounterClockwise(grid);
                 }
             } else if (event.type == sf::Event::KeyReleased) {
                 if (event.key.scancode == sf::Keyboard::Scan::S) {

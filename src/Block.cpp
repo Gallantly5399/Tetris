@@ -68,9 +68,9 @@ bool Block::rotate(const Grid& grid) {
     }
     for (int k = 0; k < offsets.size(); k++) {
         bool flag = true;
-        for (int row = 0; row < temShape.size(); row++) {
-            for (int column = 0; column < temShape[row].size(); column++) {
-                if (!temShape[row][column]) continue;
+        for (int row = 0; row < rowSize; row++) {
+            for (int column = 0; column < columnSize; column++) {
+                if (!temShape[column][row]) continue;
                 if (grid.isOccupied(startRow + row - offsets[k].second, startColumn + column - offsets[k].first)) {
                     flag = false;
                     break;
@@ -282,4 +282,50 @@ bool Block::isValid(int startRow_, int startColumn_, const Grid &grid) const {
         }
     }
     return true;
+}
+
+bool Block::rotateCounterClockwise(const Grid &grid) {
+    Block temBlock = *this;
+
+    unsigned int nextRotation = (rotation + 3) % 4;
+    temBlock.rotateCounterClockwise();
+    const auto temShape = temBlock.getShape();
+
+    std::vector<std::pair<int, int>> offsets;
+    if (type == BlockType::I) {
+        for (int i = 0; i < RotationOffsetI[rotation].size(); i++) {
+            offsets.emplace_back(RotationOffsetI[nextRotation][i][0] - RotationOffsetI[rotation][i][0],
+                                 RotationOffsetI[nextRotation][i][1] - RotationOffsetI[rotation][i][1]);
+        }
+    } else if (type == BlockType::O) {
+        for (int i = 0; i < RotationOffsetO[rotation].size(); i++) {
+            offsets.emplace_back(RotationOffsetO[nextRotation][i][0] - RotationOffsetO[rotation][i][0],
+                                 RotationOffsetO[nextRotation][i][1] - RotationOffsetO[rotation][i][1]);
+        }
+    } else {
+        for (int i = 0; i < RotationOffsetJ[rotation].size(); i++) {
+            offsets.emplace_back(RotationOffsetJ[nextRotation][i][0] - RotationOffsetJ[rotation][i][0],
+                                 RotationOffsetJ[nextRotation][i][1] - RotationOffsetJ[rotation][i][1]);
+        }
+    }
+    for (int k = 0; k < offsets.size(); k++) {
+        bool flag = true;
+        for (int row = 0; row < rowSize; row++) {
+            for (int column = 0; column < columnSize; column++) {
+                if (!temShape[column][row]) continue;
+                if (grid.isOccupied(startRow + row - offsets[k].second, startColumn + column - offsets[k].first)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if (!flag) break;
+        }
+        if (flag) {
+            startRow -= offsets[k].second;
+            startColumn -= offsets[k].first;
+            this->rotateCounterClockwise();
+            return true;
+        }
+    }
+    return false;
 }
