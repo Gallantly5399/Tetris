@@ -57,11 +57,11 @@ void drawGrid(const Grid& grid, sf::RenderWindow &window, int blockWidth, int st
 void drawBlock(const Block& block, sf::RenderWindow& window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
     const auto& shape = block.getShape();
     const auto& color = block.getColor();
-    for (int i = 0; i < shape.size(); i++) {
-        for (int j = 0; j < shape[i].size(); j++) {
-            if (shape[i][j] == 1) {
+    for (int column = 0; column < shape.size(); column++) {
+        for (int row = 0; row < shape[column].size(); row++) {
+            if (shape[column][row] == 1) {
                 sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-                auto [posX, posY] = block.getScreenPosition(i, j, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX,
+                auto [posX, posY] = block.getScreenPosition(row, column, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX,
                                                            startPosY);
                 rectangle.setPosition(posX, posY);
                 rectangle.setFillColor(color);
@@ -112,10 +112,10 @@ void insertBlock(Grid& grid, const Block& block) {
     const auto& color = block.getColor();
     int startRow = block.getStartRow();
     int startColumn = block.getStartColumn();
-    for (int i = 0; i < shape.size(); i++) {
-        for (int j = 0; j < shape[i].size(); j++) {
-            if (shape[i][j] == 1) {
-                grid.fill(startRow + i, startColumn + j, color);
+    for (int column = 0; column < shape.size(); column ++) {
+        for (int row = 0; row < shape.size(); row ++) {
+            if (shape[column][row] == 1) {
+                grid.fill(startRow + row, startColumn + column, color);
             }
         }
     }
@@ -356,24 +356,6 @@ int main() {
         window.draw(textLevelNumber);
         window.draw(textScore);
         window.draw(textScoreNumber);
-#ifndef NDEBUG
-//        auto [px, py] = block.getScreenPosition(0, 0, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX, startPosY);
-//        std::cout << "px: "<< px << ", py: " << py << std::endl;
-//        std::cout << "StartX: " << block.getStartX() << ", StartY: " << block.getStartY() << std::endl;
-#endif
-
-//        for (int i = 0; i < grid.getWidth(); i++) {
-//            for (int j = 0; j < grid.getHeight(); j++) {
-//                if (grid.isOccupied(i, j)) {
-//                    sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-//                    auto [posX, posY] = grid.getScreenPosition(i, j, 30, 1, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX,
-//                                                               startPosY);
-//                    rectangle.setPosition(posX, posY);
-//                    rectangle.setFillColor(grid.getColor(i, j));
-//                    window.draw(rectangle);
-//                }
-//            }
-//        }
         window.display();
     }
 }

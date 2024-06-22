@@ -8,10 +8,10 @@
 
 class Grid {
 public:
-    Grid(int width, int height);
+    Grid(int columnSize, int rowSize);
     Grid() {};
     //resize the grid
-    void resize(int width, int height);
+    void resize(int columnSize, int rowSize);
     //if (row, column) is occupied
     bool isOccupied(int row, int column) const;
 
@@ -19,12 +19,12 @@ public:
 
     //fill (x, y) with color
     void fill(int row,int column, sf::Color color) {
-        grid[row][column] = 1;
-        colors[row][column] = color;
+        grid[column][row] = 1;
+        colors[column][row] = color;
     }
 
     sf::Color getColor(int row, int column) const{
-        return colors[row][column];
+        return colors[column][row];
     }
     //judge if block has exceeded the boundary
     bool exceed();
@@ -45,28 +45,28 @@ public:
         return {posX, posY};
     }
     int getWidth() const {
-        return width;
+        return columnSize;
     }
     int getHeight() const {
-        return height;
+        return rowSize;
     }
     int clearLines() {
         int lines = 0;
-        for (int row = 0; row < height - 1; row ++) {
-            for (int column = 0; column < width; column ++) {
-                if (grid[row][column] == 0) {
+        for (int row = 0; row < rowSize - 1; row ++) {
+            for (int column = 0; column < columnSize; column ++) {
+                if (grid[column][row] == 0) {
                     break;
                 }
-                if (column == width - 1) {
-                    for (int i = row; i < height - 1; i ++) {
-                        for (int j = 0; j < width; j ++) {
-                            grid[i][j] = grid[i + 1][j];
-                            colors[i][j] = colors[i + 1][j];
+                if (column == columnSize - 1) {
+                    for (int i = row; i < rowSize - 1; i ++) {
+                        for (int j = 0; j < columnSize; j ++) {
+                            grid[j][i] = grid[j][i + 1];
+                            colors[j][i] = colors[j][i + 1];
                         }
                     }
-                    for (int i = 0; i < width; i ++) {
-                        grid[height - 1][i] = 0;
-                        colors[height - 1][i] = sf::Color{0x000000};
+                    for (int i = 0; i < columnSize; i ++) {
+                        grid[i][rowSize - 1] = 0;
+                        colors[i][rowSize - 1] = sf::Color{0x000000};
                     }
                     lines++;
                     row --;
@@ -77,7 +77,7 @@ public:
     }
 
 private:
-    int width, height;
+    int columnSize, rowSize;
     std::vector<std::vector<int>> grid;
     std::vector<std::vector<sf::Color>> colors;
 
