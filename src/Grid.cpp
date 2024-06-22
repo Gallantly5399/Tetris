@@ -9,6 +9,7 @@ bool Grid::isOccupied(int row, int column) const{
     return grid[row][column];
 }
 
+//TODO:: Column first vector
 Grid::Grid(int width, int height): width(width), height(height){
     grid.resize(height);
     for(auto &i : grid) {
