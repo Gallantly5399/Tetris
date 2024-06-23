@@ -329,3 +329,41 @@ bool Block::rotateCounterClockwise(const Grid &grid) {
     }
     return false;
 }
+
+Block Block::getTransparentBlock() const {
+    Block block = *this;
+    block.color.a = 0x44;
+    return block;
+}
+
+int Block::getStartColumn() const {
+    return startColumn;
+}
+
+int Block::getStartRow() const {
+    return startRow;
+}
+
+std::pair<int, int>
+Block::getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight,
+                         int startPosX, int startPosY, bool reverseY, bool startFromLeftTop) const {
+    row += startRow;
+    column += startColumn;
+    int posX = startPosX + column * (blockWidth + stripeWidth);
+    int posY = startPosY + row * (blockWidth + stripeWidth);
+    if (startFromLeftTop) {
+        posY += blockWidth + stripeWidth;
+    }
+    if (reverseY) {
+        posY = screenHeight - posY;
+    }
+    return {posX, posY};
+}
+
+BlockType Block::getType() const {
+    return type;
+}
+
+void Block::setStartColumn(int column) {
+    startColumn = column;
+}

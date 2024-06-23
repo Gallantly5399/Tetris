@@ -4,21 +4,17 @@
 
 #include "Game.h"
 
-Game::BlockMovement Game::blockMovement = BlockMovement::down;
-void Game::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
+void Game::insertBlock() {
+    const auto& shape = block.getShape();
+    const auto& color = block.getColor();
+    int startRow = block.getStartRow();
+    int startColumn = block.getStartColumn();
+    for (int column = 0; column < shape.size(); column ++) {
+        for (int row = 0; row < shape.size(); row ++) {
+            if (shape[column][row] == 1) {
+                grid.fill(startRow + row, startColumn + column, color);
+            }
+        }
     }
-    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-        blockMovement = BlockMovement::left;
-    }
-    if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-        blockMovement = BlockMovement::right;
-    }
-    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-        blockMovement = BlockMovement::down;
-    }
-    if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
-        blockMovement = BlockMovement::rotate;
-    }
+
 }

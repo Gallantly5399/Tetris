@@ -9,7 +9,6 @@ bool Grid::isOccupied(int row, int column) const{
     return grid[column][row];
 }
 
-//TODO:: Column first vector
 Grid::Grid(int columnSize_, int rowSize_): columnSize(columnSize_), rowSize(rowSize_){
     grid.resize(columnSize_);
     for(auto &i : grid) {
@@ -55,4 +54,65 @@ bool Grid::exceed() {
         if (grid[column][rowSize - 2] == 1) return true;
     }
     return false;
+}
+
+int Grid::getWidth() const {
+    return columnSize;
+}
+
+int Grid::getHeight() const {
+    return rowSize;
+}
+
+int Grid::clearLines() {
+    int lines = 0;
+    for (int row = 0; row < rowSize - 1; row ++) {
+        for (int column = 0; column < columnSize; column ++) {
+            if (grid[column][row] == 0) {
+                break;
+            }
+            if (column == columnSize - 1) {
+                for (int i = row; i < rowSize - 1; i ++) {
+                    for (int j = 0; j < columnSize; j ++) {
+                        grid[j][i] = grid[j][i + 1];
+                        colors[j][i] = colors[j][i + 1];
+                    }
+                }
+                for (int i = 0; i < columnSize; i ++) {
+                    grid[i][rowSize - 1] = 0;
+                    colors[i][rowSize - 1] = sf::Color{0x000000};
+                }
+                lines++;
+                row --;
+            }
+        }
+    }
+    return lines;
+}
+
+std::pair<int, int>
+Grid::getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight,
+                        int startPosX, int startPosY, bool reverseY, bool startFromLeftTop) const {
+    int posX = startPosX + column * (blockWidth + stripeWidth);
+    int posY = startPosY + row  * (blockWidth + stripeWidth);
+    if (startFromLeftTop) {
+        posY += blockWidth + stripeWidth;
+    }
+    if (reverseY) {
+        posY = screenHeight - posY;
+    }
+    return {posX, posY};
+}
+
+sf::Color Grid::getColor(int row, int column) const {
+    return colors[column][row];
+}
+
+void Grid::fill(int row, int column, sf::Color color) {
+    grid[column][row] = 1;
+    colors[column][row] = color;
+}
+
+const std::vector<std::vector<int>> &Grid::getGrid() const {
+    return grid;
 }
