@@ -10,7 +10,6 @@
 #include <iostream>
 #endif
 #include "Grid.h"
-#include "GLFW/glfw3.h"
 #include <SFML/Graphics.hpp>
 
 

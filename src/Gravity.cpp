@@ -4,6 +4,7 @@
 
 #include "Gravity.h"
 #include <algorithm>
+#include <cmath>
 
 void Gravity::setSoftDrop() {
     isSoftDrop = true;
