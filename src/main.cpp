@@ -24,12 +24,6 @@
 // |
 // |
 // -----------x
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-}
-
 const unsigned int SCREEN_WIDTH = 1200, SCREEN_HEIGHT = 675;
 
 //glm::vec2 worldToScreen(unsigned int x, unsigned int y) {
