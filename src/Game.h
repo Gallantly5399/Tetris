@@ -47,7 +47,6 @@ private:
         down,
         rotate
     };
-    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static BlockMovement blockMovement;
     unsigned int mainWindowWidth, mainWindowHeight;
     unsigned int nextWindowWidth, nextWindowHeight;
