@@ -256,16 +256,16 @@ BlockPosition Block::getPosition() const {
 }
 
 bool Block::touch(const Grid& grid) const {
-    const auto temShape = this->getShape();
-    for (int row = 0; row < rowSize; row++) {
-        for (int column = 0; column < columnSize; column++) {
-            if (temShape[column][row] == 1 && grid.isOccupied(startRow + row - 1, startColumn + column)) {
-                return true;
-            }
-        }
-    }
-    return false;
-//    return !isValid(startRow, startColumn, grid);
+//    const auto temShape = this->getShape();
+//    for (int row = 0; row < rowSize; row++) {
+//        for (int column = 0; column < columnSize; column++) {
+//            if (temShape[column][row] == 1 && grid.isOccupied(startRow + row - 1, startColumn + column)) {
+//                return true;
+//            }
+//        }
+//    }
+//    return false;
+    return !isValid(startRow - 1, startColumn, grid);
 }
 
 sf::Color Block::getColor() const{

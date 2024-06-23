@@ -103,6 +103,8 @@ public:
     int getStartColumn() const {
         return startColumn;
     }
+    bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
+    
     void output() {
 #ifndef NDEBUG
         for (int i = shape.size() - 1;i >= 0;i --) {
@@ -124,5 +126,4 @@ private:
     int rowSize = 0;
     int columnSize = 0;
     unsigned int rotation = 0;
-    bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
 };
