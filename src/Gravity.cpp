@@ -58,3 +58,6 @@ void Gravity::setNoGravity() {
     noGravity = true;
 }
 
+int Gravity::getLines() const {
+    return clearedLines;
+}

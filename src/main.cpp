@@ -51,6 +51,7 @@ void drawGrid(const Grid& grid, sf::RenderWindow &window, int blockWidth, int st
 }
 
 void drawBlock(const Block& block, sf::RenderWindow& window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
+    if (block.empty()) return;
     const auto& shape = block.getShape();
     const auto& color = block.getColor();
     for (int column = 0; column < shape.size(); column++) {
@@ -66,8 +67,6 @@ void drawBlock(const Block& block, sf::RenderWindow& window, int blockWidth, int
         }
     }
 }
-
-//generate the next block
 
 //insert the block into the grid
 void insertBlock(Grid& grid, const Block& block) {
@@ -85,7 +84,7 @@ void insertBlock(Grid& grid, const Block& block) {
 }
 
 
-void drawMainWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY, int width, int height, int windowWidth, int windowHeight, bool reverseY = true) {
+void drawWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY, int width, int height, int windowWidth, int windowHeight, bool reverseY = true) {
     //draw 3 lines
     sf::Vector2f leftBottom(startPosX, startPosY);
     sf::Vector2f leftTop(startPosX, startPosY + height);
@@ -108,31 +107,24 @@ void drawMainWindowBackground(sf::RenderWindow& window, int startPosX, int start
     window.draw(lineTop, 2, sf::Lines);
 }
 
-void drawNextWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY, int width, int height, int windowWidth, int windowHeight, bool reverseY = true) {
-    sf::Vector2f leftBottom(startPosX, startPosY);
-    sf::Vector2f leftTop(startPosX, startPosY + height);
-    sf::Vector2f rightBottom(startPosX + width, startPosY);
-    sf::Vector2f rightTop(startPosX + width, startPosY + height);
-    if (reverseY) {
-        leftBottom.y = windowHeight - leftBottom.y;
-        leftTop.y = windowHeight - leftTop.y;
-        rightBottom.y = windowHeight - rightBottom.y;
-        rightTop.y = windowHeight - rightTop.y;
-    }
-    sf::Vertex lineBottom[] = {leftBottom, rightBottom};
-    sf::Vertex lineLeft[] = {leftBottom, leftTop};
-    sf::Vertex lineRight[] = {rightBottom, rightTop};
-    sf::Vertex lineTop[] = {leftTop, rightTop};
-    window.draw(lineBottom, 2, sf::Lines);
-    window.draw(lineLeft, 2, sf::Lines);
-    window.draw(lineRight, 2, sf::Lines);
-    window.draw(lineTop, 2, sf::Lines);
-}
+void drawHoldBlock(sf::RenderWindow& window, const Block& block, int startPosX, int startPosY, int blockWidth, int stripeWidth) {
+    int currentPosX = startPosX, currentPosY = startPosY;
+    Block temBlock = block;
+    temBlock.setStartRow(0);
+    temBlock.setStartColumn(0);
 
+    if (temBlock.getType() == BlockType::I) {
+        currentPosX -= 45;
+    } else if (temBlock.getType() == BlockType::O) {
+        currentPosX -= 15;
+    }
+
+    drawBlock(temBlock, window, blockWidth, stripeWidth, currentPosX, currentPosY);
+}
 void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBlocks, int startPosX, int startPosY, int blockWidth, int stripeWidth) {
     int posX = 550, posY = 625 - 91;
     for (int i = 0; i < nextBlocks.size(); i++) {
-        int currentPosX = 550, currentPosY = posY - i * 92;
+        int currentPosX = posX, currentPosY = posY - i * 92;
         Block temBlock = nextBlocks[i];
         temBlock.setStartRow(0);
         temBlock.setStartColumn(0);
@@ -180,7 +172,7 @@ int main() {
 //    int movement = 0;
 //    bool isLockDelay = true;
     sf::Font font;
-
+    std::filesystem::path fontsPath = std::filesystem::path(FILE_LOCATION) / "resources" / "fonts";
     if (!font.loadFromFile((fontsPath / "scoreFont.ttf").string())) {
         std::cerr << "Failed to load font\n";
         return 1;
@@ -188,24 +180,29 @@ int main() {
     //text level
     sf::Text textLevel;
     textLevel.setFont(font);
-    textLevel.setString("Level");
+    textLevel.setString("Level: 0");
     textLevel.setCharacterSize(24);
     textLevel.setPosition(700, 25);
-
-    sf::Text textLevelNumber;
-    textLevelNumber.setFont(font);
-    textLevelNumber.setCharacterSize(24);
-    textLevelNumber.setPosition(730, 50);
+//
+//    sf::Text textLevelNumber;
+//    textLevelNumber.setFont(font);
+//    textLevelNumber.setCharacterSize(24);
+//    textLevelNumber.setPosition(730, 50);
     sf::Text textScore;
     textScore.setFont(font);
-    textScore.setString("Score");
+    textScore.setString("Score: 0");
     textScore.setCharacterSize(24);
-    textScore.setPosition(700, 100);
+    textScore.setPosition(700, 75);
 
-    sf::Text textScoreNumber;
-    textScoreNumber.setFont(font);
-    textScoreNumber.setCharacterSize(24);
-    textScoreNumber.setPosition(730, 120);
+    sf::Text textLines;
+    textLines.setFont(font);
+    textLines.setString("Lines: 0");
+    textLines.setCharacterSize(24);
+    textLines.setPosition(700, 125);
+//    sf::Text textScoreNumber;
+//    textScoreNumber.setFont(font);
+//    textScoreNumber.setCharacterSize(24);
+//    textScoreNumber.setPosition(730, 120);
     Game game{};
     sf::RenderWindow& window = game.getWindow();
     while (!game.shouldClose()) {
@@ -215,15 +212,18 @@ int main() {
         game.getGravity().addLines(clearedLines);
         score += scores[clearedLines] * game.getGravity().getLevel();
 
+        textLevel.setString("Level: " + std::to_string(game.getGravity().getLevel()));
+        textScore.setString("Score: " + std::to_string(score));
+        textLines.setString("Lines: " + std::to_string(game.getGravity().getLines()));
         //Text Level and Score
-        textLevelNumber.setString(std::to_string(game.getGravity().getLevel()));
-        if (game.getGravity().getLevel() >= 10) textLevelNumber.setPosition(715, 50);
-        else textLevelNumber.setPosition(730, 50);
-        if (score >= 1000) textScoreNumber.setPosition(700, 120);
-        else if (score >= 100) textScoreNumber.setPosition(710, 120);
-        else if(score >= 10) textScoreNumber.setPosition(720, 120);
-        else textScoreNumber.setPosition(730, 120);
-        textScoreNumber.setString(std::to_string(score));
+//        textLevelNumber.setString(std::to_string(game.getGravity().getLevel()));
+//        if (game.getGravity().getLevel() >= 10) textLevelNumber.setPosition(715, 50);
+//        else textLevelNumber.setPosition(730, 50);
+//        if (score >= 1000) textScoreNumber.setPosition(700, 120);
+//        else if (score >= 100) textScoreNumber.setPosition(710, 120);
+//        else if(score >= 10) textScoreNumber.setPosition(720, 120);
+//        else textScoreNumber.setPosition(730, 120);
+//        textScoreNumber.setString(std::to_string(score));
 
         window.clear(sf::Color::Black);
         drawBlock(game.getBlock(), window, blockWidth, stripeWidth, startPosX, startPosY);
@@ -235,15 +235,20 @@ int main() {
         //TODO:: make magic number to constant
         //draw the main window
         //310 670
-        drawMainWindowBackground(window, startPosX, startPosY, 310, startPosY + 594, SCREEN_WIDTH, SCREEN_HEIGHT);
+        //main window
+        drawWindowBackground(window, startPosX, startPosY, 310, startPosY + 594, SCREEN_WIDTH, SCREEN_HEIGHT);
         int nextWidth = 155, nextHeight = nextCount * 92;
         //startPos(525, 640 - nextHeight)
-        drawNextWindowBackground(window, 525, 644 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
+        //next window
+        drawWindowBackground(window, 525, 644 - nextHeight, nextWidth, nextHeight, SCREEN_WIDTH, SCREEN_HEIGHT);
         drawNextBlocks(window, game.getGenerator().seeNextBlocks(nextCount), 550, 625, blockWidth, stripeWidth);
+
+        //hold window
+        drawWindowBackground(window, 35, startPosY + 594 - 92 + 25, nextWidth, 92, SCREEN_WIDTH, SCREEN_HEIGHT);
+        drawHoldBlock(window, game.getHoldBlock(), 60, startPosY + 594 - 92, blockWidth, stripeWidth);
         window.draw(textLevel);
-        window.draw(textLevelNumber);
         window.draw(textScore);
-        window.draw(textScoreNumber);
+        window.draw(textLines);
         window.display();
     }
 }

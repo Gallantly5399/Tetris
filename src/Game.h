@@ -27,83 +27,9 @@ public:
     //if timer > fall time then block move down
     double frameTime = 1.0 / 60 * 1000;
     bool firstDraw = false;
-    void tick() {
-        sf::RenderWindow& window = ui.getWindow();
-        //key events
-        bool isHardDrop = false;
-        sf::Event event;
-        while (window.pollEvent(event)) {
-//            std::cout << gravity.getFallTime() << std::endl;
-            if (event.type == sf::Event::Closed)
-                window.close();
-            else if (event.type == sf::Event::KeyPressed) {
-                if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-                    window.close();
-                } else if (event.key.scancode == sf::Keyboard::Scan::W) {
-                    bool state = block.rotate(grid);
-                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
-                    //rotate the block
-                } else if (event.key.scancode == sf::Keyboard::Scan::A) {
-                    bool state = block.moveLeft(grid);
-                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
-                } else if (event.key.scancode == sf::Keyboard::Scan::D) {
-                    bool state = block.moveRight(grid);
-                    if (isTouchedGround && state) movement ++, lockDelayTime = 0;
-                } else if (event.key.scancode == sf::Keyboard::Scan::S) {
-                    gravity.setSoftDrop();
-                } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
-                    isHardDrop = true;
-                } else if (event.key.scancode == sf::Keyboard::Scan::Q) {
-                    block.rotateCounterClockwise(grid);
-                }
-            } else if (event.type == sf::Event::KeyReleased) {
-                if (event.key.scancode == sf::Keyboard::Scan::S) {
-                    gravity.unsetSoftDrop();
-                }
-            }
-        }
 
-        //TODO:: refactor block score api
-        double passedTime = clock.restart().asSeconds();
-        time += passedTime;
-        if (time >= gravity.getFallTime()) {
-            block.moveDown(grid);
-            time = 0;
-        }
+    void tick();
 
-        Block transparentBlock = block.getTransparentBlock();
-        while(transparentBlock.moveDown(grid));
-        //TODO:: add lock delay 0.5s and maximum movement of 10
-        if (isHardDrop) while(block.moveDown(grid));
-        if (block.touch(grid)) {
-            if (isLockDelay && !isHardDrop) {
-                if (isTouchedGround) {
-                    lockDelayTime += passedTime;
-                    if (lockDelayTime >= 0.5 || movement >= 10) {
-                        insertBlock();
-                        block = generator.nextBlock();
-                        gravity.unsetSoftDrop();
-                    }
-                } else {
-                    lockDelayTime = 0;
-                    isTouchedGround = true;
-                }
-            }
-            else {
-                insertBlock();
-                block = generator.nextBlock();
-                gravity.unsetSoftDrop();
-            }
-        } else {
-            isTouchedGround = false;
-            movement = 0;
-        }
-        if (grid.exceed()) {
-            //TODO:: game over
-            stop();
-            window.close();
-        }
-    }
     Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity() {
         block = generator.nextBlock();
     }
@@ -112,10 +38,13 @@ public:
         const auto& color = block.getColor();
         grid.insertBlock(shape, color, block.getPosition().startRow, block.getPosition().startColumn);
     }
+
+    void hold();
     Game(unsigned int windowWidth, unsigned int windowHeight,int gameWidth, int gameHeight):
     block(BlockType::O), grid(gameWidth, gameHeight) {
-//        render.resizeData(4000);
+
     }
+    Block getHoldBlock() const;
     void insertBlock();
     const unsigned int Height = 10, Width = 20;
     const unsigned int NextWidth = 3, NextHeight = 6, NextCount = 1;
@@ -146,6 +75,7 @@ public:
         return !ui.getWindow().isOpen();
     }
 private:
+    void processKeyEvents();
     bool isTouchedGround = false;
     int movement = 0;
     bool isRunning = true;
@@ -165,6 +95,7 @@ private:
     double lockDelayTime = 0;
     double time = 0;
 
+    bool isHardDrop = false;
     sf::Clock clock;
     Block block;
     Grid grid;
@@ -175,5 +106,6 @@ private:
     int index(int x, int y) {
         return x + y * Width;
     }
-
+    Block holdBlock;
+    bool isHold = false;
 };

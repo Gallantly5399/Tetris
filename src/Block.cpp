@@ -367,3 +367,27 @@ BlockType Block::getType() const {
 void Block::setStartColumn(int column) {
     startColumn = column;
 }
+
+bool Block::empty() const{
+    return shape.empty();
+}
+//void Block::swapForHold(Block& holdBlock) {
+//    while(this->rotation) this->rotate();
+//    while(holdBlock.rotation) holdBlock.rotate();
+////    std::swap(this->rotation, otherBlock.rotation);
+//    std::swap(this->shape, holdBlock.shape);
+//    std::swap(this->color, holdBlock.color);
+//    std::swap(this->columnSize, holdBlock.columnSize);
+//    std::swap(this->rowSize, holdBlock.rowSize);
+//    std::swap(this->type, holdBlock.type);
+//
+//}
+//
+//void Block::copyForHold(Block &otherBlock) {
+//    while(otherBlock.rotation) otherBlock.rotate();
+//    this->shape = otherBlock.shape;
+//    this->color = otherBlock.color;
+//    this->columnSize = otherBlock.columnSize;
+//    this->rowSize = otherBlock.rowSize;
+//    this->type = otherBlock.type;
+//}

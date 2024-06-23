@@ -42,6 +42,7 @@ class Block {
 public:
 
     Block(BlockType type);
+    Block(){ };
     //rotate if valid
     bool rotate(const Grid& grid);
     bool moveLeft(const Grid& grid);
@@ -51,9 +52,13 @@ public:
     void setStartRow(int row) {
         startRow = row;
     }
+
+//    void swapForHold(Block& otherBlock);
+//    void copyForHold(Block& otherBlock);
+    bool empty() const;
     BlockType getType() const;
     void setStartColumn(int column);
-    Block() = delete;
+//    Block() = delete;
     //Copy constructor
     Block(const Block& block);
     //Copy assignment
