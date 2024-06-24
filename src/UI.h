@@ -14,17 +14,31 @@ public:
     UI& operator=(const UI& ui) = delete;
     UI(UI&& ui) = delete;
     UI& operator=(UI&& ui) = delete;
-
-    void draw();
+    void drawLevel(int level);
+    void drawScore(int score);
+    void drawLines(int lines);
     void clear();
+    void display();
     sf::RenderWindow& getWindow();
+    void drawGrid(const Grid &grid);
+    void drawBlock(const Block &block, int startPosX, int startPosY);
+    void drawBackground();
+    //draw 4 lines
+
+    void drawHoldBlock(const Block &block, int startPosX, int startPosY);
+    void drawNextBlocks(const std::vector<Block> &nextBlocks, int startPosX, int startPosY);
+
 private:
+    void drawWindowBackground(int startPosX, int startPosY, int width, int height, bool reverseY = true);
+    const int SCREEN_WIDTH = 1200, SCREEN_HEIGHT = 675;
+    const int BlockWidth = 30, StripeWidth = 1;
+    const int GridStartX = 200, GridStartY = 25;
+    const int MainWindowStartX = 200, MainWindowStartY = 25;
+    const int NextCount = 5, NextWidth = 155, NextHeight = NextCount * 92, NextWindowStartX = 525, NextWindowStartY = 644 - NextHeight;
+    const int HoldWindowStartX = 35, HoldWindowStartY = MainWindowStartY + 594 - 92 + 25, HoldWidth = NextWidth, HoldHeight = 92;
     sf::RenderWindow window;
     sf::Font font;
     sf::Text textLevel;
-    sf::Text textLevelNumber;
     sf::Text textScore;
-    sf::Text textScoreNumber;
     sf::Text textLines;
-    sf::Text textLinesNumber;
 };

@@ -97,7 +97,6 @@ void Game::tick() {
                     ScoreType scoreType = addScore();
                     isHold = false;
                     if (grid.exceed()) {
-                        //TODO:: game over
                         stop();
                     } else block = generator.nextBlock();
                     gravity.unsetSoftDrop();
@@ -114,7 +113,6 @@ void Game::tick() {
             isHold = false;
             gravity.unsetSoftDrop();
             if (grid.exceed()) {
-                //TODO:: game over
                 stop();
             } else block = generator.nextBlock();
         }
@@ -124,10 +122,6 @@ void Game::tick() {
     }
 
 
-}
-
-Block Game::getHoldBlock() const {
-    return holdBlock;
 }
 
 void Game::hold() {
@@ -203,32 +197,8 @@ bool Game::TSpin() const {
     return count >= 3;
 }
 
-int Game::getScore() {
-    return score;
-}
-
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(){
     block = generator.nextBlock();
-}
-
-sf::RenderWindow &Game::getWindow() {
-    return ui.getWindow();
-}
-
-Gravity &Game::getGravity() {
-    return gravity;
-}
-
-Grid &Game::getGrid() {
-    return grid;
-}
-
-Block &Game::getBlock() {
-    return block;
-}
-
-Generator &Game::getGenerator() {
-    return generator;
 }
 
 void Game::stop() {
@@ -251,4 +221,39 @@ void Game::restart() {
     gravity.clear();
     generator.clear();
     block = generator.nextBlock();
+}
+
+void Game::draw() {
+    ui.clear();
+    if (!shouldStop()) {
+        ui.drawBlock(block, 200, 25);
+        Block transparentBlock = block.getTransparentBlock();
+        while (transparentBlock.moveDown(grid));
+        ui.drawBlock(transparentBlock, 200, 25);
+    }
+    ui.drawLevel(gravity.getLevel());
+    ui.drawScore(score);
+    ui.drawLines(gravity.getLines());
+    ui.drawGrid(grid);
+    ui.drawBackground();
+    ui.display();
+}
+
+void Game::run() {
+    while (!shouldClose()) {
+        tick();
+        draw();
+    }
+}
+
+void Game::close() {
+    ui.getWindow().close();
+}
+
+bool Game::isDifficultScore(const ScoreType &scoreType) const {
+    if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle || scoreType == ScoreType::TSpinMiniDouble ||
+        scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble || scoreType == ScoreType::TSpinTriple) {
+        return true;
+    }
+    return false;
 }
