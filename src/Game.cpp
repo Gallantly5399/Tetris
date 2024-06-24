@@ -19,7 +19,7 @@ void Game::insertBlock() {
 
 }
 
-void Game::processKeyEvents() {
+void Game::processEvents() {
     sf::Event event;
     sf::RenderWindow& window = ui.getWindow();
     while (window.pollEvent(event)) {
@@ -52,6 +52,16 @@ void Game::processKeyEvents() {
             if (event.key.scancode == sf::Keyboard::Scan::S) {
                 gravity.unsetSoftDrop();
             }
+        } else if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                auto [gridColumn, gridRow] = mousePositionToGridPosition(mousePosition.x, mousePosition.y);
+                grid.fill(gridRow,  gridColumn, sf::Color{0x333333ff});
+            } else if (event.mouseButton.button == sf::Mouse::Right) {
+                sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                auto [gridColumn, gridRow] = mousePositionToGridPosition(mousePosition.x, mousePosition.y);
+                grid.clear(gridRow, gridColumn);
+            }
         }
     }
 }
@@ -60,7 +70,7 @@ void Game::tick() {
     sf::RenderWindow& window = ui.getWindow();
     //key events
     isHardDrop = false;
-    processKeyEvents();
+    processEvents();
     //TODO:: refactor block score api
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
@@ -120,4 +130,8 @@ void Game::hold() {
     BlockType temType = holdBlock.getType();
     holdBlock = Block(block.getType());
     block = Block(temType);
+}
+
+std::pair<int, int> Game::mousePositionToGridPosition(float x, float y) {
+    return {(int)(x - 200) / 31, (int)(675 - y - 25) / 31,  };
 }

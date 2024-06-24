@@ -82,6 +82,7 @@ bool Block::rotate(const Grid& grid) {
             startRow -= offsets[k].second;
             startColumn -= offsets[k].first;
             this->rotate();
+            lastMovement = Movement::Rotate;
             return true;
         }
     }
@@ -235,12 +236,14 @@ const std::vector<std::vector<int>>& Block::getShape() const {
 
 bool Block::moveLeft(const Grid& grid) {
     if (!isValid(startRow, startColumn - 1, grid)) return false;
+    lastMovement = Movement::Left;
     startColumn -= 1;
     return true;
 }
 
 bool Block::moveRight(const Grid& grid) {
     if (!isValid(startRow, startColumn + 1, grid)) return false;
+    lastMovement = Movement::Right;
     startColumn += 1;
     return true;
 }
@@ -256,15 +259,6 @@ BlockPosition Block::getPosition() const {
 }
 
 bool Block::touch(const Grid& grid) const {
-//    const auto temShape = this->getShape();
-//    for (int row = 0; row < rowSize; row++) {
-//        for (int column = 0; column < columnSize; column++) {
-//            if (temShape[column][row] == 1 && grid.isOccupied(startRow + row - 1, startColumn + column)) {
-//                return true;
-//            }
-//        }
-//    }
-//    return false;
     return !isValid(startRow - 1, startColumn, grid);
 }
 
@@ -323,6 +317,7 @@ bool Block::rotateCounterClockwise(const Grid &grid) {
         if (flag) {
             startRow -= offsets[k].second;
             startColumn -= offsets[k].first;
+            lastMovement = Movement::Rotate;
             this->rotateCounterClockwise();
             return true;
         }
@@ -370,6 +365,10 @@ void Block::setStartColumn(int column) {
 
 bool Block::empty() const{
     return shape.empty();
+}
+
+Movement Block::getLastMovement() const {
+    return lastMovement;
 }
 //void Block::swapForHold(Block& holdBlock) {
 //    while(this->rotation) this->rotate();

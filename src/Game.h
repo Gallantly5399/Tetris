@@ -13,13 +13,20 @@
 #include "Generator.h"
 
 enum class scoreType {
-    single = 100,
-    doubleLine = 300,
-    tripleLine = 500,
-    tetris = 800,
-    softDrop = 1,
-    hardDrop = 2,
-
+    Single = 100,
+    Double = 300,
+    Tripe = 500,
+    Tetris = 800,
+    SoftDrop = 1,
+    HardDrop = 2,
+    Combo = 50,
+    TSpinSingle = 800,
+    TSpinDouble = 1200,
+    TSpinTriple = 1600,
+    SinglePerfectClear = 800,
+    DoublePerfectClear = 1200,
+    TriplePerfectClear = 1600,
+    TetrisPerfectClear = 2000,
 };
 class Game {
 public:
@@ -75,7 +82,9 @@ public:
         return !ui.getWindow().isOpen();
     }
 private:
-    void processKeyEvents();
+    //column row
+    std::pair<int, int> mousePositionToGridPosition(float x, float y);
+    void processEvents();
     bool isTouchedGround = false;
     int movement = 0;
     bool isRunning = true;

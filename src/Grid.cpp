@@ -109,10 +109,18 @@ sf::Color Grid::getColor(int row, int column) const {
 }
 
 void Grid::fill(int row, int column, sf::Color color) {
+    if (row < 0 || row > rowSize || column < 0 || column >= columnSize) return;
+//    std::cout << "fill" << std::endl;
     grid[column][row] = 1;
     colors[column][row] = color;
 }
 
 const std::vector<std::vector<int>> &Grid::getGrid() const {
     return grid;
+}
+
+void Grid::clear(int row, int column) {
+    if (row < 0 || row > rowSize || column < 0 || column >= columnSize) return;
+    grid[column][row] = 0;
+    colors[column][row] = sf::Color{0x000000};
 }

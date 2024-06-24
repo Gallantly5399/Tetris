@@ -20,6 +20,7 @@ public:
 
     //fill (x, y) with color
     void fill(int row, int column, sf::Color color);
+    void clear(int row, int column);
     sf::Color getColor(int row, int column) const;
     //judge if block has exceeded the boundary
     bool exceed();

@@ -24,6 +24,12 @@ enum class BlockType{
     I = 6
 };
 
+enum class Movement {
+    Rotate,
+    Left,
+    Right,
+    Down
+};
 // local coordinate
 // for example, the shape of I block is
 //
@@ -38,6 +44,7 @@ struct BlockPosition {
     int startRow;
     int startColumn;
 };
+
 class Block {
 public:
 
@@ -79,6 +86,7 @@ public:
     Block getTransparentBlock() const;
     int getStartColumn() const;
     bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
+    Movement getLastMovement() const;
 private:
     void rotateCounterClockwise();
     //just rotate in the local coordinate
@@ -91,4 +99,5 @@ private:
     int rowSize = 0;
     int columnSize = 0;
     unsigned int rotation = 0;
+    Movement lastMovement;
 };
