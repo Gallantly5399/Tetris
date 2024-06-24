@@ -40,53 +40,32 @@ public:
     //if timer > fall time then block move down
     double frameTime = 1.0 / 60 * 1000;
     bool firstDraw = false;
-
+    //delete copy constructor and move constructor
+    Game(const Game&) = delete;
+    Game& operator=(const Game&) = delete;
+    Game(Game&&) = delete;
+    Game& operator=(Game&&) = delete;
     void tick();
 
-    Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity() {
-        block = generator.nextBlock();
-    }
-    void insertGridBlock(const Block& block) {
-        const auto& shape = block.getShape();
-        const auto& color = block.getColor();
-        grid.insertBlock(shape, color, block.getPosition().startRow, block.getPosition().startColumn);
-    }
-
+    Game();
     void hold();
-    Game(unsigned int windowWidth, unsigned int windowHeight,int gameWidth, int gameHeight):
-    block(BlockType::O), grid(gameWidth, gameHeight) {
-
-    }
+//    Game(unsigned int windowWidth, unsigned int windowHeight,int gameWidth, int gameHeight):
+//    block(BlockType::O), grid(gameWidth, gameHeight) {
+//
+//    }
     Block getHoldBlock() const;
     void insertBlock();
     const unsigned int Height = 10, Width = 20;
     const unsigned int NextWidth = 3, NextHeight = 6, NextCount = 1;
-    sf::RenderWindow& getWindow() {
-        return ui.getWindow();
-    }
-    Gravity& getGravity() {
-        return gravity;
-    }
-    Grid& getGrid() {
-        return grid;
-    }
-    Block& getBlock() {
-        return block;
-    }
+    sf::RenderWindow& getWindow();
+    Gravity& getGravity();
+    Grid& getGrid();
+    Block& getBlock();
+    Generator& getGenerator();
+    void stop();
+    bool shouldStop();
 
-    Generator& getGenerator() {
-        return generator;
-    }
-    void stop() {
-        isRunning = false;
-    }
-    bool shouldStop() {
-        return !isRunning;
-    }
-
-    bool shouldClose() {
-        return !ui.getWindow().isOpen();
-    }
+    bool shouldClose();
     bool isDifficultScore(const ScoreType scoreType) const{
         if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle || scoreType == ScoreType::TSpinMiniDouble ||
             scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble || scoreType == ScoreType::TSpinTriple) {
@@ -137,4 +116,5 @@ private:
     int comboCount = 0;
     ScoreType addScore();
     bool TSpin() const;
+    void restart();
 };

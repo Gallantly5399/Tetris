@@ -33,13 +33,15 @@ const unsigned int SCREEN_WIDTH = 1200, SCREEN_HEIGHT = 675;
 //}
 
 
-void drawGrid(const Grid& grid, sf::RenderWindow &window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
+void
+drawGrid(const Grid &grid, sf::RenderWindow &window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
     for (int column = 0; column < grid.getWidth(); column++) {
         for (int row = 0; row < grid.getHeight() - 1; row++) {
             if (grid.isOccupied(row, column)) {
 //                std::cout << "Draw row:" << row << " and column:" << column << "\n";
                 sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-                auto [posX, posY] = grid.getScreenPosition(row, column, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX,
+                auto [posX, posY] = grid.getScreenPosition(row, column, blockWidth, stripeWidth, SCREEN_WIDTH,
+                                                           SCREEN_HEIGHT, startPosX,
                                                            startPosY);
                 rectangle.setPosition(posX, posY);
 //                std::cout << "posX: " << posX << ", posY: " << posY << std::endl;
@@ -50,16 +52,18 @@ void drawGrid(const Grid& grid, sf::RenderWindow &window, int blockWidth, int st
     }
 }
 
-void drawBlock(const Block& block, sf::RenderWindow& window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
+void
+drawBlock(const Block &block, sf::RenderWindow &window, int blockWidth, int stripeWidth, int startPosX, int startPosY) {
     if (block.empty()) return;
-    const auto& shape = block.getShape();
-    const auto& color = block.getColor();
+    const auto &shape = block.getShape();
+    const auto &color = block.getColor();
     for (int column = 0; column < shape.size(); column++) {
         for (int row = 0; row < shape[column].size(); row++) {
             if (shape[column][row] == 1) {
                 sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-                auto [posX, posY] = block.getScreenPosition(row, column, blockWidth, stripeWidth, SCREEN_WIDTH, SCREEN_HEIGHT, startPosX,
-                                                           startPosY);
+                auto [posX, posY] = block.getScreenPosition(row, column, blockWidth, stripeWidth, SCREEN_WIDTH,
+                                                            SCREEN_HEIGHT, startPosX,
+                                                            startPosY);
                 rectangle.setPosition(posX, posY);
                 rectangle.setFillColor(color);
                 window.draw(rectangle);
@@ -69,13 +73,13 @@ void drawBlock(const Block& block, sf::RenderWindow& window, int blockWidth, int
 }
 
 //insert the block into the grid
-void insertBlock(Grid& grid, const Block& block) {
-    const auto& shape = block.getShape();
-    const auto& color = block.getColor();
+void insertBlock(Grid &grid, const Block &block) {
+    const auto &shape = block.getShape();
+    const auto &color = block.getColor();
     int startRow = block.getStartRow();
     int startColumn = block.getStartColumn();
-    for (int column = 0; column < shape.size(); column ++) {
-        for (int row = 0; row < shape.size(); row ++) {
+    for (int column = 0; column < shape.size(); column++) {
+        for (int row = 0; row < shape.size(); row++) {
             if (shape[column][row] == 1) {
                 grid.fill(startRow + row, startColumn + column, color);
             }
@@ -84,7 +88,9 @@ void insertBlock(Grid& grid, const Block& block) {
 }
 
 
-void drawWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY, int width, int height, int windowWidth, int windowHeight, bool reverseY = true) {
+void
+drawWindowBackground(sf::RenderWindow &window, int startPosX, int startPosY, int width, int height, int windowWidth,
+                     int windowHeight, bool reverseY = true) {
     //draw 3 lines
     sf::Vector2f leftBottom(startPosX, startPosY);
     sf::Vector2f leftTop(startPosX, startPosY + height);
@@ -107,7 +113,8 @@ void drawWindowBackground(sf::RenderWindow& window, int startPosX, int startPosY
     window.draw(lineTop, 2, sf::Lines);
 }
 
-void drawHoldBlock(sf::RenderWindow& window, const Block& block, int startPosX, int startPosY, int blockWidth, int stripeWidth) {
+void drawHoldBlock(sf::RenderWindow &window, const Block &block, int startPosX, int startPosY, int blockWidth,
+                   int stripeWidth) {
     int currentPosX = startPosX, currentPosY = startPosY;
     Block temBlock = block;
     temBlock.setStartRow(0);
@@ -121,7 +128,9 @@ void drawHoldBlock(sf::RenderWindow& window, const Block& block, int startPosX, 
 
     drawBlock(temBlock, window, blockWidth, stripeWidth, currentPosX, currentPosY);
 }
-void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBlocks, int startPosX, int startPosY, int blockWidth, int stripeWidth) {
+
+void drawNextBlocks(sf::RenderWindow &window, const std::vector<Block> &nextBlocks, int startPosX, int startPosY,
+                    int blockWidth, int stripeWidth) {
     int posX = 550, posY = 625 - 91;
     for (int i = 0; i < nextBlocks.size(); i++) {
         int currentPosX = posX, currentPosY = posY - i * 92;
@@ -130,7 +139,7 @@ void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBloc
         temBlock.setStartColumn(0);
 
         if (temBlock.getType() == BlockType::I) {
-           currentPosX -= 45;
+            currentPosX -= 45;
         } else if (temBlock.getType() == BlockType::O) {
             currentPosX -= 15;
         }
@@ -138,14 +147,15 @@ void drawNextBlocks(sf::RenderWindow& window, const std::vector<Block>& nextBloc
         drawBlock(temBlock, window, blockWidth, stripeWidth, currentPosX, currentPosY);
     }
 }
+
 int main() {
+    //TODO::add restart
 //    Gravity gravity(1);
 //    gravity.setNoGravity();
     unsigned long long score = 0;
     unsigned long long totalClearedLines = 0;
     unsigned long long linesToUpdate = 0;
     const int nextCount = 5;
-    std::array<int, 5> scores = {0, 1, 3, 5, 8};
 //    Generator generator{};
     const int blockWidth = 30, stripeWidth = 1;
 //    Grid grid(10, 22);
@@ -200,33 +210,19 @@ int main() {
 //    textScoreNumber.setCharacterSize(24);
 //    textScoreNumber.setPosition(730, 120);
     Game game{};
-    sf::RenderWindow& window = game.getWindow();
+    sf::RenderWindow &window = game.getWindow();
     while (!game.shouldClose()) {
         game.tick();
-        //TODO add level
-        int clearedLines = game.getGrid().clearLines();
-        game.getGravity().addLines(clearedLines);
-
-
         textLevel.setString("Level: " + std::to_string(game.getGravity().getLevel()));
         textScore.setString("Score: " + std::to_string(game.getScore()));
         textLines.setString("Lines: " + std::to_string(game.getGravity().getLines()));
-        //Text Level and Score
-//        textLevelNumber.setString(std::to_string(game.getGravity().getLevel()));
-//        if (game.getGravity().getLevel() >= 10) textLevelNumber.setPosition(715, 50);
-//        else textLevelNumber.setPosition(730, 50);
-//        if (score >= 1000) textScoreNumber.setPosition(700, 120);
-//        else if (score >= 100) textScoreNumber.setPosition(710, 120);
-//        else if(score >= 10) textScoreNumber.setPosition(720, 120);
-//        else textScoreNumber.setPosition(730, 120);
-//        textScoreNumber.setString(std::to_string(score));
-
         window.clear(sf::Color::Black);
-        drawBlock(game.getBlock(), window, blockWidth, stripeWidth, startPosX, startPosY);
-        Block transparentBlock = game.getBlock().getTransparentBlock();
-        while(transparentBlock.moveDown(game.getGrid()));
-        drawBlock(transparentBlock, window, blockWidth, stripeWidth, startPosX, startPosY);
-
+        if (!game.shouldStop()) {
+            drawBlock(game.getBlock(), window, blockWidth, stripeWidth, startPosX, startPosY);
+            Block transparentBlock = game.getBlock().getTransparentBlock();
+            while (transparentBlock.moveDown(game.getGrid()));
+            drawBlock(transparentBlock, window, blockWidth, stripeWidth, startPosX, startPosY);
+        }
         drawGrid(game.getGrid(), window, blockWidth, stripeWidth, startPosX, startPosY);
         //TODO:: make magic number to constant
         //draw the main window

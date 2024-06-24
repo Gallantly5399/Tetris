@@ -24,7 +24,7 @@ public:
     sf::Color getColor(int row, int column) const;
     //judge if block has exceeded the boundary
     bool exceed();
-
+    void clear();
     //insert the block into the grid
     void insertBlock(const std::vector<std::vector<int>> &shape, sf::Color color, int startRow, int startColumn);
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const;

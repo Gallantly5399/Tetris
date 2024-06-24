@@ -10,6 +10,7 @@ public:
     Generator();
     Block nextBlock();
     std::vector<Block> seeNextBlocks(int count) const;
+    void clear();
 private:
     std::mt19937 gen;
     int index = 0;

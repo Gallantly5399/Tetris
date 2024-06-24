@@ -52,6 +52,8 @@ void Game::processEvents() {
                 block.rotateCounterClockwise(grid);
             } else if (event.key.scancode == sf::Keyboard::Scan::H) {
                 hold();
+            } else if (event.key.scancode == sf::Keyboard::Scan::P) {
+                restart();
             }
         } else if (event.type == sf::Event::KeyReleased) {
             if (event.key.scancode == sf::Keyboard::Scan::S) {
@@ -72,11 +74,10 @@ void Game::processEvents() {
 }
 
 void Game::tick() {
-    sf::RenderWindow& window = ui.getWindow();
     //key events
     isHardDrop = false;
     processEvents();
-    //TODO:: refactor block score api
+    if (!isRunning) return;
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
     if (time >= gravity.getFallTime()) {
@@ -95,9 +96,13 @@ void Game::tick() {
                     insertBlock();
                     ScoreType scoreType = addScore();
                     isHold = false;
-                    block = generator.nextBlock();
+                    if (grid.exceed()) {
+                        //TODO:: game over
+                        stop();
+                    } else block = generator.nextBlock();
                     gravity.unsetSoftDrop();
                     lockDelayTime = movement = 0;
+
                 }
             } else {
                 lockDelayTime = 0;
@@ -107,19 +112,18 @@ void Game::tick() {
             insertBlock();
             ScoreType scoreType = addScore();
             isHold = false;
-            block = generator.nextBlock();
             gravity.unsetSoftDrop();
+            if (grid.exceed()) {
+                //TODO:: game over
+                stop();
+            } else block = generator.nextBlock();
         }
     } else {
         isTouchedGround = false;
         movement = 0;
     }
 
-    if (grid.exceed()) {
-        //TODO:: game over
-        stop();
-        window.close();
-    }
+
 }
 
 Block Game::getHoldBlock() const {
@@ -185,6 +189,7 @@ ScoreType Game::addScore() {
     if (comboCount >= 2) {
         score += (comboCount - 1) * static_cast<int>(ScoreType::Combo);
     }
+    gravity.addLines(lines);
     grid.clearLines();
     return scoreType;
 }
@@ -200,4 +205,50 @@ bool Game::TSpin() const {
 
 int Game::getScore() {
     return score;
+}
+
+Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(){
+    block = generator.nextBlock();
+}
+
+sf::RenderWindow &Game::getWindow() {
+    return ui.getWindow();
+}
+
+Gravity &Game::getGravity() {
+    return gravity;
+}
+
+Grid &Game::getGrid() {
+    return grid;
+}
+
+Block &Game::getBlock() {
+    return block;
+}
+
+Generator &Game::getGenerator() {
+    return generator;
+}
+
+void Game::stop() {
+    isRunning = false;
+}
+
+bool Game::shouldStop() {
+    return !isRunning;
+}
+
+bool Game::shouldClose() {
+    return !ui.getWindow().isOpen();
+}
+
+void Game::restart() {
+    isRunning = true;
+    score = 0;
+    holdBlock = BlockType::None;
+    grid.clear();
+    gravity.clear();
+    generator.clear();
+    block = generator.nextBlock();
 }

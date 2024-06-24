@@ -367,7 +367,8 @@ void Block::setStartColumn(int column) {
 }
 
 bool Block::empty() const{
-    return shape.empty();
+    if (type == BlockType::None) return true;
+    return false;
 }
 
 Movement Block::getLastMovement() const {

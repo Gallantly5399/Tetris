@@ -124,3 +124,12 @@ void Grid::clear(int row, int column) {
     grid[column][row] = 0;
     colors[column][row] = sf::Color{0x000000};
 }
+
+void Grid::clear() {
+    for (auto &i : grid) {
+        for (int &j : i) j = 0;
+    }
+    for (auto &i : colors) {
+        for (auto &j : i) j = sf::Color{0x000000};
+    }
+}

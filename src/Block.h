@@ -21,7 +21,8 @@ enum class BlockType{
     J = 3,
     L = 4,
     T = 5,
-    I = 6
+    I = 6,
+    None = 7
 };
 
 enum class Movement {

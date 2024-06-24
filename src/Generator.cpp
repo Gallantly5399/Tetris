@@ -29,3 +29,9 @@ std::vector<Block> Generator::seeNextBlocks(int count) const{
     }
     return blocks;
 }
+
+void Generator::clear() {
+    index = 0;
+    std::shuffle(nextBlocks.begin(), nextBlocks.begin() + 7, gen);
+    std::shuffle(nextBlocks.begin() + 7, nextBlocks.begin() + 14, gen);
+}
