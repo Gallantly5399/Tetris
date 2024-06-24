@@ -160,10 +160,6 @@ int main() {
     //FIXME::block movement is not smooth
 //    window.setKeyRepeatEnabled(false);
 
-    /*TODO::Every movement will update the lockDelay status
-     * and the maximum movement is 10
-     */
-    //TODO:: add harddrop
     //TODO:: T-spin
     //TODO:: block.moveDown() optimization
 //    sf::Clock lockDelayClock;
@@ -210,10 +206,10 @@ int main() {
         //TODO add level
         int clearedLines = game.getGrid().clearLines();
         game.getGravity().addLines(clearedLines);
-        score += scores[clearedLines] * game.getGravity().getLevel();
+
 
         textLevel.setString("Level: " + std::to_string(game.getGravity().getLevel()));
-        textScore.setString("Score: " + std::to_string(score));
+        textScore.setString("Score: " + std::to_string(game.getScore()));
         textLines.setString("Lines: " + std::to_string(game.getGravity().getLines()));
         //Text Level and Score
 //        textLevelNumber.setString(std::to_string(game.getGravity().getLevel()));

@@ -40,8 +40,6 @@ const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetZ = 
 const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetT = RotationOffsetJ;
 
 
-//FIXME:: the rotationOffset is not correct
-//FIXME:: wall kick error
 bool Block::rotate(const Grid& grid) {
     Block temBlock = *this;
 
@@ -79,6 +77,8 @@ bool Block::rotate(const Grid& grid) {
             if (!flag) break;
         }
         if (flag) {
+            if (k == 4) srs = true;
+            else srs = false;
             startRow -= offsets[k].second;
             startColumn -= offsets[k].first;
             this->rotate();
@@ -250,6 +250,7 @@ bool Block::moveRight(const Grid& grid) {
 
 bool Block::moveDown(const Grid& grid) {
     if (!isValid(startRow - 1, startColumn, grid)) return false;
+    lastMovement = Movement::Down;
     startRow -= 1;
     return true;
 }
@@ -315,6 +316,8 @@ bool Block::rotateCounterClockwise(const Grid &grid) {
             if (!flag) break;
         }
         if (flag) {
+            if (k == 4) srs = true;
+            else srs = false;
             startRow -= offsets[k].second;
             startColumn -= offsets[k].first;
             lastMovement = Movement::Rotate;
@@ -370,23 +373,7 @@ bool Block::empty() const{
 Movement Block::getLastMovement() const {
     return lastMovement;
 }
-//void Block::swapForHold(Block& holdBlock) {
-//    while(this->rotation) this->rotate();
-//    while(holdBlock.rotation) holdBlock.rotate();
-////    std::swap(this->rotation, otherBlock.rotation);
-//    std::swap(this->shape, holdBlock.shape);
-//    std::swap(this->color, holdBlock.color);
-//    std::swap(this->columnSize, holdBlock.columnSize);
-//    std::swap(this->rowSize, holdBlock.rowSize);
-//    std::swap(this->type, holdBlock.type);
-//
-//}
-//
-//void Block::copyForHold(Block &otherBlock) {
-//    while(otherBlock.rotation) otherBlock.rotate();
-//    this->shape = otherBlock.shape;
-//    this->color = otherBlock.color;
-//    this->columnSize = otherBlock.columnSize;
-//    this->rowSize = otherBlock.rowSize;
-//    this->type = otherBlock.type;
-//}
+
+bool Block::getSrs() const {
+    return srs;
+}

@@ -80,13 +80,13 @@ public:
     sf::Color getColor() const;
     bool touch(const Grid& grid) const;
     bool rotateCounterClockwise(const Grid& grid);
-    //FIXME:: maybe something wrong
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const;
     int getStartRow() const;
     Block getTransparentBlock() const;
     int getStartColumn() const;
     bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
     Movement getLastMovement() const;
+    bool getSrs() const;
 private:
     void rotateCounterClockwise();
     //just rotate in the local coordinate
@@ -98,6 +98,7 @@ private:
     int startColumn = 0;
     int rowSize = 0;
     int columnSize = 0;
+    bool srs = false;
     unsigned int rotation = 0;
     Movement lastMovement;
 };

@@ -12,14 +12,17 @@
 #include "Gravity.h"
 #include "Generator.h"
 
-enum class scoreType {
+enum class ScoreType {
+    None = 0,
     Single = 100,
     Double = 300,
-    Tripe = 500,
+    Triple = 500,
     Tetris = 800,
-    SoftDrop = 1,
-    HardDrop = 2,
     Combo = 50,
+    TSpinMiniNoLines = 100,
+    TSpinMiniSingle = 200,
+    TSpinMiniDouble = 400,
+    TSpinNoLines = 400,
     TSpinSingle = 800,
     TSpinDouble = 1200,
     TSpinTriple = 1600,
@@ -27,6 +30,9 @@ enum class scoreType {
     DoublePerfectClear = 1200,
     TriplePerfectClear = 1600,
     TetrisPerfectClear = 2000,
+    BackToBackTetrisPerfectClear = 3200,
+    SoftDrop = 1,
+    HardDrop = 2
 };
 class Game {
 public:
@@ -81,6 +87,14 @@ public:
     bool shouldClose() {
         return !ui.getWindow().isOpen();
     }
+    bool isDifficultScore(const ScoreType scoreType) const{
+        if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle || scoreType == ScoreType::TSpinMiniDouble ||
+            scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble || scoreType == ScoreType::TSpinTriple) {
+            return true;
+        }
+        return false;
+    }
+    int getScore();
 private:
     //column row
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
@@ -115,6 +129,12 @@ private:
     int index(int x, int y) {
         return x + y * Width;
     }
+    int score = 0;
     Block holdBlock;
     bool isHold = false;
+    //1.5 times for difficult score
+    bool backToBack = false;
+    int comboCount = 0;
+    ScoreType addScore();
+    bool TSpin() const;
 };
