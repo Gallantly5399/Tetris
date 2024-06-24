@@ -12,30 +12,6 @@
 #include "Gravity.h"
 #include "Generator.h"
 
-//TODO:: add perfect clear
-enum class ScoreType {
-    None = 0,
-    Single = 100,
-    Double = 300,
-    Triple = 500,
-    Tetris = 800,
-    Combo = 50,
-    TSpinMiniNoLines = 100,
-    TSpinMiniSingle = 200,
-    TSpinMiniDouble = 400,
-    TSpinNoLines = 400,
-    TSpinSingle = 800,
-    TSpinDouble = 1200,
-    TSpinTriple = 1600,
-    SinglePerfectClear = 800,
-    DoublePerfectClear = 1200,
-    TriplePerfectClear = 1600,
-    TetrisPerfectClear = 2000,
-    BackToBackTetrisPerfectClear = 3200,
-    SoftDrop = 1,
-    HardDrop = 2
-};
-
 class Game {
 public:
     //delete copy constructor and move constructor
@@ -71,7 +47,7 @@ private:
     Generator generator;
     Gravity gravity;
     int score = 0;
-    Block holdBlock;
+    Block holdBlock = Block();
 
     //if now is available to hold
     bool isHold = false;
@@ -81,6 +57,7 @@ private:
 
 
     int comboCount = 0;
+    ScoreType lastScoreType = ScoreType::None;
     ScoreType addScore();
     bool TSpin() const;
     void restart();

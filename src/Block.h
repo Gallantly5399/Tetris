@@ -50,7 +50,8 @@ class Block {
 public:
 
     Block(BlockType type);
-    Block(){ };
+    Block();
+    bool checkMiniTSpin(const Grid& grid) const;
     //rotate if valid
     bool rotate(const Grid& grid);
     bool moveLeft(const Grid& grid);

@@ -371,10 +371,21 @@ bool Block::empty() const{
     return false;
 }
 
+Block::Block() {
+    type = BlockType::None;
+}
+
 Movement Block::getLastMovement() const {
     return lastMovement;
 }
 
 bool Block::getSrs() const {
     return srs;
+}
+
+bool Block::checkMiniTSpin(const Grid &grid) const {
+    if (rotation == 0) return grid.isOccupied(startRow + 2, startColumn) && grid.isOccupied(startRow + 2, startColumn + 2);
+    if (rotation == 1) return grid.isOccupied(startRow + 2, startColumn + 2) && grid.isOccupied(startRow, startColumn + 2);
+    if (rotation == 2) return grid.isOccupied(startRow, startColumn + 2) && grid.isOccupied(startRow, startColumn);
+    if (rotation == 3) return grid.isOccupied(startRow, startColumn) && grid.isOccupied(startRow + 2, startColumn);
 }

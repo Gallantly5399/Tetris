@@ -94,7 +94,7 @@ void Game::tick() {
                 lockDelayTime += passedTime;
                 if (lockDelayTime >= 0.5 || movement >= 10) {
                     insertBlock();
-                    ScoreType scoreType = addScore();
+                    lastScoreType = addScore();
                     isHold = false;
                     if (grid.exceed()) {
                         stop();
@@ -109,7 +109,7 @@ void Game::tick() {
             }
         } else {
             insertBlock();
-            ScoreType scoreType = addScore();
+            lastScoreType = addScore();
             isHold = false;
             gravity.unsetSoftDrop();
             if (grid.exceed()) {
@@ -149,10 +149,12 @@ ScoreType Game::addScore() {
     //T-spin
     if (TSpin()) {
         //T-spin mini
-        if (isSrs) {
+        //FIXME::may be wrong here
+        if (isSrs && block.checkMiniTSpin(grid)) {
             if (lines == 0) scoreType = ScoreType::TSpinMiniNoLines;
             else if (lines == 1) scoreType = ScoreType::TSpinMiniSingle;
             else if (lines == 2) scoreType = ScoreType::TSpinMiniDouble;
+            else if (lines == 3) scoreType = ScoreType::TSpinTriple;
         } else {
             //T-spin
             if (lines == 0) scoreType = ScoreType::TSpinNoLines;
@@ -235,7 +237,10 @@ void Game::draw() {
     ui.drawScore(score);
     ui.drawLines(gravity.getLines());
     ui.drawGrid(grid);
+    ui.drawHoldBlock(holdBlock);
+    ui.drawNextBlocks(generator.seeNextBlocks(ui.getNextCount()));
     ui.drawBackground();
+    ui.drawScoreType(lastScoreType, comboCount, backToBack);
     ui.display();
 }
 

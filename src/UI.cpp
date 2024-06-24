@@ -4,6 +4,8 @@
 
 #include "UI.h"
 #include <filesystem>
+#include <string>
+
 UI::UI() :
 window(sf::VideoMode(1200, 675), "Tetris") {
     std::filesystem::path fontsPath = std::filesystem::path(FILE_LOCATION) / "resources" / "fonts";
@@ -22,6 +24,10 @@ window(sf::VideoMode(1200, 675), "Tetris") {
     textLines.setString("Lines: 0");
     textLines.setCharacterSize(24);
     textLines.setPosition(700, 125);
+
+    textScoreType.setFont(font);
+    textScoreType.setCharacterSize(20);
+    textScoreType.setPosition(700, 275);
 }
 
 
@@ -52,8 +58,8 @@ void UI::display() {
     window.display();
 }
 
-void UI::drawNextBlocks(const std::vector<Block> &nextBlocks, int startPosX, int startPosY) {
-    int posX = 550, posY = 625 - 91;
+void UI::drawNextBlocks(const std::vector<Block> &nextBlocks) {
+    int posX = NextBlockStartX, posY = NextBlockStartY;
     for (int i = 0; i < nextBlocks.size(); i++) {
         int currentPosX = posX, currentPosY = posY - i * 92;
         Block temBlock = nextBlocks[i];
@@ -71,8 +77,8 @@ void UI::drawNextBlocks(const std::vector<Block> &nextBlocks, int startPosX, int
 
 }
 
-void UI::drawHoldBlock(const Block &block, int startPosX, int startPosY) {
-    int currentPosX = startPosX, currentPosY = startPosY;
+void UI::drawHoldBlock(const Block &block) {
+    int currentPosX = HoldBlockStartX, currentPosY = HoldBlockStartY;
     Block temBlock = block;
     temBlock.setStartRow(0);
     temBlock.setStartColumn(0);
@@ -152,4 +158,35 @@ void UI::drawBackground() {
     drawWindowBackground(NextWindowStartX, NextWindowStartY, NextWidth, NextHeight);
     //hold window
     drawWindowBackground(HoldWindowStartX, HoldWindowStartY, HoldWidth, HoldHeight);
+}
+
+int UI::getNextCount() const {
+    return NextCount;
+}
+
+std::string to_string(ScoreType scoreType) {
+    if (scoreType == ScoreType::Single) return "Single";
+    else if (scoreType == ScoreType::Double) return "Double";
+    else if (scoreType == ScoreType::Triple) return "Triple";
+    else if (scoreType == ScoreType::Tetris) return "Tetris";
+    else if (scoreType == ScoreType::TSpinMiniNoLines) return "TSpinMiniNoLines";
+    else if (scoreType == ScoreType::TSpinMiniSingle) return "TSpinMiniSingle";
+    else if (scoreType == ScoreType::TSpinMiniDouble) return "TSpinMiniDouble";
+    else if (scoreType == ScoreType::TSpinNoLines) return "TSpinNoLines";
+    else if (scoreType == ScoreType::TSpinSingle) return "TSpinSingle";
+    else if (scoreType == ScoreType::TSpinDouble) return "TSpinDouble";
+    else if (scoreType == ScoreType::TSpinTriple) return "TSpinTriple";
+    else if (scoreType == ScoreType::SinglePerfectClear) return "SinglePerfectClear";
+    else if (scoreType == ScoreType::DoublePerfectClear) return "DoublePerfectClear";
+    else if (scoreType == ScoreType::TriplePerfectClear) return "TriplePerfectClear";
+    else if (scoreType == ScoreType::TetrisPerfectClear) return "TetrisPerfectClear";
+    else if (scoreType == ScoreType::BackToBackTetrisPerfectClear) return "BackToBackTetrisPerfectClear";
+    else return "";
+}
+void UI::drawScoreType(ScoreType scoreType, int comboCount, bool backToBack) {
+    std::string text = to_string(scoreType);
+    if (comboCount > 0) text += "\nCombo x" + std::to_string(comboCount);
+    if (backToBack) text += "\nBackToBack";
+    textScoreType.setString(text);
+    window.draw(textScoreType);
 }
