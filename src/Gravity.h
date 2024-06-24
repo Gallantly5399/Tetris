@@ -23,6 +23,8 @@ public:
 
     //return seconds
     double getFallTime() const;
+    int getLines() const;
+    void clear();
     void setHardDrop();
     int getLevel() const;
     void setNoGravity();

@@ -59,3 +59,13 @@ void Gravity::setNoGravity() {
     noGravity = true;
 }
 
+int Gravity::getLines() const {
+    return clearedLines;
+}
+
+void Gravity::clear() {
+    clearedLines = 0;
+    level = 1;
+    updateFallTime();
+    isSoftDrop = false;
+}

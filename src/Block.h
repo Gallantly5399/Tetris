@@ -12,7 +12,7 @@
 #include "Grid.h"
 #include <SFML/Graphics.hpp>
 
-
+//column first vector
 enum class BlockType{
     O = 0,
     S = 1,
@@ -20,9 +20,16 @@ enum class BlockType{
     J = 3,
     L = 4,
     T = 5,
-    I = 6
+    I = 6,
+    None = 7
 };
 
+enum class Movement {
+    Rotate,
+    Left,
+    Right,
+    Down
+};
 // local coordinate
 // for example, the shape of I block is
 //
@@ -37,31 +44,29 @@ struct BlockPosition {
     int startRow;
     int startColumn;
 };
+
 class Block {
 public:
 
     Block(BlockType type);
+    Block();
+    bool checkMiniTSpin(const Grid& grid) const;
     //rotate if valid
     bool rotate(const Grid& grid);
-
-    //just rotate in the local coordinate
-    void rotate();
-    BlockPosition getPosition() const;
     bool moveLeft(const Grid& grid);
     bool moveRight(const Grid& grid);
     bool moveDown(const Grid& grid);
+    BlockPosition getPosition() const;
     void setStartRow(int row) {
         startRow = row;
     }
-    BlockType getType() const {
-        return type;
-    }
-    void setStartColumn(int column) {
-        startColumn = column;
-    }
-    Block() {
-        type = BlockType::O;
-    }
+
+//    void swapForHold(Block& otherBlock);
+//    void copyForHold(Block& otherBlock);
+    bool empty() const;
+    BlockType getType() const;
+    void setStartColumn(int column);
+//    Block() = delete;
     //Copy constructor
     Block(const Block& block);
     //Copy assignment
@@ -75,49 +80,26 @@ public:
 
     sf::Color getColor() const;
     bool touch(const Grid& grid) const;
-
-    //FIXME:: maybe something wrong
-    std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const {
-        row += startRow;
-        column += startColumn;
-        int posX = startPosX + column * (blockWidth + stripeWidth);
-        int posY = startPosY + row * (blockWidth + stripeWidth);
-        if (startFromLeftTop) {
-            posY += blockWidth + stripeWidth;
-        }
-        if (reverseY) {
-            posY = screenHeight - posY;
-        }
-        return {posX, posY};
-    }
-    int getStartRow() const {
-        return startRow;
-    }
-    Block getTransparentBlock() const {
-        Block block = *this;
-        block.color.a = 0x44;
-        return block;
-    }
-    int getStartColumn() const {
-        return startColumn;
-    }
-    void output() {
-#ifndef NDEBUG
-        for (int i = shape.size() - 1;i >= 0;i --) {
-            for (auto j : shape[i]) {
-                std::cout << j << " ";
-            }
-            std::cout << std::endl;
-        }
-#endif
-    }
-
-
+    bool rotateCounterClockwise(const Grid& grid);
+    std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const;
+    int getStartRow() const;
+    Block getTransparentBlock() const;
+    int getStartColumn() const;
+    bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
+    Movement getLastMovement() const;
+    bool getSrs() const;
 private:
+    void rotateCounterClockwise();
+    //just rotate in the local coordinate
+    void rotate();
     std::vector<std::vector<int>> shape;
     BlockType type;
     sf::Color color;
     int startRow = 0;
     int startColumn = 0;
+    int rowSize = 0;
+    int columnSize = 0;
+    bool srs = false;
     unsigned int rotation = 0;
+    Movement lastMovement;
 };

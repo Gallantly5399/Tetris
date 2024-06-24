@@ -6,57 +6,62 @@
 #include <vector>
 #include "Block.h"
 #include "Grid.h"
+#include "UI.h"
 #include <chrono>
+#include "Gravity.h"
+#include "Generator.h"
 
 class Game {
 public:
-    //every tick render mainWindow and nextWindow and the moving block
-    //if timer > fall time then block move down
-    double frameTime = 1.0 / 60 * 1000;
-    bool firstDraw = false;
-    void tick() {
-        static auto lastUpdateTime = std::chrono::steady_clock::now();
-        if (!firstDraw) {
-            firstDraw = true;
-            lastUpdateTime = std::chrono::steady_clock::now();
-        }
+    //delete copy constructor and move constructor
+    Game(const Game&) = delete;
+    Game& operator=(const Game&) = delete;
+    Game(Game&&) = delete;
+    Game& operator=(Game&&) = delete;
+    void tick();
 
-        auto currentTime = std::chrono::steady_clock::now();
-        double durationTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                currentTime - lastUpdateTime).count();
-        if (durationTime >= frameTime) {
-            lastUpdateTime = std::chrono::steady_clock::now();
-        }
-    }
-    void insertGridBlock(const Block& block) {
-        const auto& shape = block.getShape();
-        const auto& color = block.getColor();
-        grid.insertBlock(shape, color, block.getPosition().startRow, block.getPosition().startColumn);
-    }
-    Game(unsigned int windowWidth, unsigned int windowHeight,int gameWidth, int gameHeight):
-    block(BlockType::O), grid(gameWidth, gameHeight) {
-//        render.resizeData(4000);
-    }
-    const unsigned int Height = 10, Width = 20;
-    const unsigned int NextWidth = 3, NextHeight = 6, NextCount = 1;
+    Game();
+    void hold();
+    bool shouldStop();
+    bool shouldClose();
+
+    void run();
+    void close();
 private:
-    //input the cube data into the render
-    enum class BlockMovement {
-        left,
-        right,
-        down,
-        rotate
-    };
-    static BlockMovement blockMovement;
-    unsigned int mainWindowWidth, mainWindowHeight;
-    unsigned int nextWindowWidth, nextWindowHeight;
-//    const unsigned int mainWindowWidth = 1200, mainWindowHeight = 675;
-//    const unsigned int nextWindowWidth = 400 , nextWindowHeight = 800;
+    //column row
+    std::pair<int, int> mousePositionToGridPosition(float x, float y);
+    void processEvents();
+    bool isTouchedGround = false;
+    int movement = 0;
+    bool isRunning = true;
+    bool isLockDelay = true;
+    double lockDelayTime = 0;
+    double time = 0;
+
+    bool isHardDrop = false;
+    sf::Clock clock;
     Block block;
     Grid grid;
-    //map two dimenstions to one dimension
-    int index(int x, int y) {
-        return x + y * Width;
-    }
+    UI ui;
+    Generator generator;
+    Gravity gravity;
+    int score = 0;
+    Block holdBlock = Block();
 
+    //if now is available to hold
+    bool isHold = false;
+
+    //1.5 times for difficult score
+    bool backToBack = false;
+
+
+    int comboCount = 0;
+    ScoreType lastScoreType = ScoreType::None;
+    ScoreType addScore();
+    bool TSpin() const;
+    void restart();
+    void draw();
+    void insertBlock();
+    void stop();
+    bool isDifficultScore(const ScoreType& scoreType) const;
 };
