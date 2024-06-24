@@ -150,7 +150,7 @@ ScoreType Game::addScore() {
     if (TSpin()) {
         //T-spin mini
         //FIXME::may be wrong here
-        if (isSrs && block.checkMiniTSpin(grid)) {
+        if (isSrs || block.checkMiniTSpin(grid)) {
             if (lines == 0) scoreType = ScoreType::TSpinMiniNoLines;
             else if (lines == 1) scoreType = ScoreType::TSpinMiniSingle;
             else if (lines == 2) scoreType = ScoreType::TSpinMiniDouble;
@@ -169,21 +169,21 @@ ScoreType Game::addScore() {
         else if (lines == 4) scoreType = ScoreType::Tetris;
     }
     if (isDifficultScore(scoreType)) {
-        if (backToBack) score += 1.5 * static_cast<int>(scoreType);
-        else score += static_cast<int>(scoreType);
+        if (backToBack) score += 1.5 * scoreTypeToInt(scoreType);
+        else score +=  scoreTypeToInt(scoreType);
         backToBack = true;
         comboCount ++;
     } else if (scoreType == ScoreType::Single || scoreType == ScoreType::Double || scoreType == ScoreType::Triple) {
-        score += static_cast<int>(scoreType);
+        score +=  scoreTypeToInt(scoreType);
         backToBack = false;
         comboCount ++;
         backToBack = false;
     } else {
-        score += static_cast<int>(scoreType);
+        score +=  scoreTypeToInt(scoreType);
         comboCount = 0;
     }
     if (comboCount >= 2) {
-        score += (comboCount - 1) * static_cast<int>(ScoreType::Combo);
+        score += (comboCount - 1) *  scoreTypeToInt(ScoreType::Combo);
     }
     gravity.addLines(lines);
     grid.clearLines();
@@ -261,4 +261,26 @@ bool Game::isDifficultScore(const ScoreType &scoreType) const {
         return true;
     }
     return false;
+}
+
+int Game::scoreTypeToInt(ScoreType scoreType) {
+    if (scoreType == ScoreType::None) return 0;
+    else if (scoreType == ScoreType::Single) return 100;
+    else if (scoreType == ScoreType::Double) return 300;
+    else if (scoreType == ScoreType::Triple) return 500;
+    else if (scoreType == ScoreType::Tetris) return 800;
+    else if (scoreType == ScoreType::Combo) return 50;
+    else if (scoreType == ScoreType::TSpinMiniNoLines) return 100;
+    else if (scoreType == ScoreType::TSpinMiniSingle) return 200;
+    else if (scoreType == ScoreType::TSpinMiniDouble) return 400;
+    else if (scoreType == ScoreType::TSpinNoLines) return 400;
+    else if (scoreType == ScoreType::TSpinSingle) return 800;
+    else if (scoreType == ScoreType::TSpinDouble) return 1200;
+    else if (scoreType == ScoreType::TSpinTriple) return 1600;
+    else if (scoreType == ScoreType::SinglePerfectClear) return 800;
+    else if (scoreType == ScoreType::DoublePerfectClear) return 1200;
+    else if (scoreType == ScoreType::TriplePerfectClear) return 1600;
+    else if (scoreType == ScoreType::TetrisPerfectClear) return 2000;
+    else if (scoreType == ScoreType::BackToBackTetrisPerfectClear) return 3200;
+    else return 0;
 }

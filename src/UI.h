@@ -8,27 +8,24 @@
 #include "Block.h"
 enum class ScoreType {
     None = 0,
-    Single = 100,
-    Double = 300,
-    Triple = 500,
-    Tetris = 800,
-    Combo = 50,
-    TSpinMiniNoLines = 100,
-    TSpinMiniSingle = 200,
-    TSpinMiniDouble = 400,
-    TSpinNoLines = 400,
-    TSpinSingle = 800,
-    TSpinDouble = 1200,
-    TSpinTriple = 1600,
-    SinglePerfectClear = 800,
-    DoublePerfectClear = 1200,
-    TriplePerfectClear = 1600,
-    TetrisPerfectClear = 2000,
-    BackToBackTetrisPerfectClear = 3200,
-    SoftDrop = 1,
-    HardDrop = 2
+    Single,
+    Double,
+    Triple,
+    Tetris,
+    Combo,
+    TSpinMiniNoLines,
+    TSpinMiniSingle,
+    TSpinMiniDouble,
+    TSpinNoLines,
+    TSpinSingle,
+    TSpinDouble,
+    TSpinTriple,
+    SinglePerfectClear,
+    DoublePerfectClear,
+    TriplePerfectClear,
+    TetrisPerfectClear,
+    BackToBackTetrisPerfectClear,
 };
-
 class UI {
 public:
     explicit UI();
