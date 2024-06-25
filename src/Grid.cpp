@@ -133,3 +133,53 @@ void Grid::clear() {
         for (auto &j : i) j = sf::Color{0x000000};
     }
 }
+
+int Grid::lines() const{
+    int lines = 0;
+    for (int row = 0; row < rowSize; row ++) {
+        for (int column = 0; column < columnSize; column ++) {
+            if (!grid[column][row]) break;
+            if (column == columnSize - 1) lines ++;
+        }
+    }
+    return lines;
+}
+
+int Grid::bumpiness() const {
+    int bumpiness = 0;
+    int preLines = 0;
+    for (int row = 0; row < rowSize; row ++) {
+        if (grid[0][row]) preLines = row + 1;
+    }
+    for (int column = 1; column < columnSize; column ++) {
+        int currentLines = 0;
+        for (int row = 0; row < rowSize; row ++) {
+            if (grid[column][row]) currentLines = row + 1;
+        }
+        bumpiness += std::abs(currentLines - preLines);
+        preLines = currentLines;
+    }
+    return bumpiness;
+}
+
+int Grid::holes() const {
+    int holes = 0;
+    for (int column = 0; column < columnSize; column ++) {
+        for (int row = 0; row < rowSize; row ++) {
+            if (!grid[column][row] && grid[column][row + 1]) holes ++;
+        }
+    }
+    return holes;
+}
+
+int Grid::aggregateHeight() const {
+    int aggregateHeight = 0;
+    for (int column = 0; column < columnSize; column ++) {
+        int highestLine = 0;
+        for (int row = 0; row < rowSize; row ++) {
+            if (grid[column][row]) highestLine = row + 1;
+        }
+        aggregateHeight += highestLine;
+    }
+    return aggregateHeight;
+}

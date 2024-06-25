@@ -25,11 +25,14 @@
 // |
 // |
 // -----------x
+#include "Tuner.h"
 int main() {
-    Game game{};
-    while(!game.shouldClose()) {
-        game.run();
-    }
-    game.close();
+    Tuner tuner{};
+    tuner.run();
+//    Game game{};
+//    while(!game.shouldClose()) {
+//        game.run();
+//    }
+//    game.close();
 }
 

@@ -31,7 +31,10 @@ public:
     int getWidth() const;
     int getHeight() const;
     int clearLines();
-
+    int lines() const;
+    int bumpiness() const;
+    int holes() const;
+    int aggregateHeight() const;
 private:
     int columnSize, rowSize;
     std::vector<std::vector<int>> grid;

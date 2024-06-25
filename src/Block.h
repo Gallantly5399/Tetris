@@ -86,6 +86,7 @@ public:
     Block getTransparentBlock() const;
     int getStartColumn() const;
     bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
+    bool valid(const Grid& grid) const;
     Movement getLastMovement() const;
     bool getSrs() const;
 private:

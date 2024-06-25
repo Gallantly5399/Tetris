@@ -389,3 +389,7 @@ bool Block::checkMiniTSpin(const Grid &grid) const {
     if (rotation == 2) return !grid.isOccupied(startRow, startColumn + 2) || !grid.isOccupied(startRow, startColumn);
     if (rotation == 3) return !grid.isOccupied(startRow, startColumn) || !grid.isOccupied(startRow + 2, startColumn);
 }
+
+bool Block::valid(const Grid &grid) const {
+    return isValid(startRow, startColumn, grid);
+}

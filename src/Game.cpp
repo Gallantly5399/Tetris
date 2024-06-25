@@ -87,7 +87,8 @@ void Game::tick() {
 
     Block transparentBlock = block.getTransparentBlock();
     while(transparentBlock.moveDown(grid));
-    if (isHardDrop) while(block.moveDown(grid));
+    if (isHardDrop) {while(block.moveDown(grid));}
+
     if (block.touch(grid)) {
         if (isLockDelay && !isHardDrop) {
             if (isTouchedGround) {
