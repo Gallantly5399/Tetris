@@ -9,21 +9,11 @@
 #include "UI.h"
 #include <chrono>
 #include "Gravity.h"
+#include "Ai.h"
 #include "Generator.h"
+#include <queue>
 
-static void insertBlock(Grid& grid, const Block& block) {
-    const auto& shape = block.getShape();
-    const auto& color = block.getColor();
-    int startRow = block.getStartRow();
-    int startColumn = block.getStartColumn();
-    for (int column = 0; column < shape.size(); column ++) {
-        for (int row = 0; row < shape.size(); row ++) {
-            if (shape[column][row] == 1) {
-                grid.fill(startRow + row, startColumn + column, color);
-            }
-        }
-    }
-}
+
 class Game {
 public:
     //delete copy constructor and move constructor
@@ -32,7 +22,6 @@ public:
     Game(Game&&) = delete;
     Game& operator=(Game&&) = delete;
     void tick();
-
     Game();
     void hold();
     bool shouldStop();
@@ -51,6 +40,7 @@ private:
     bool isLockDelay = true;
     double lockDelayTime = 0;
     double time = 0;
+    bool isAiActive = false;
 
     bool isHardDrop = false;
     sf::Clock clock;
@@ -68,7 +58,7 @@ private:
     //1.5 times for difficult score
     bool backToBack = false;
 
-
+    AI ai;
     int comboCount = 0;
     ScoreType lastScoreType = ScoreType::None;
     ScoreType addScore();
@@ -78,4 +68,9 @@ private:
     void insertBlock();
     void stop();
     bool isDifficultScore(const ScoreType& scoreType) const;
+    std::queue<Movement> simulateMovement(const Block& aiBlock);
+    std::queue<Movement> aiMovement;
+    bool firstBlock = false;
+    sf::Clock aiClock;
+    double aiLastMoveTime = 0;
 };

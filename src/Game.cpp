@@ -3,6 +3,7 @@
 //
 
 #include "Game.h"
+
 #ifndef NDEBUG
 #define Debug(x) (std::cerr << #x << ": " << (x) << std::endl)
 #else
@@ -10,12 +11,12 @@
 #endif
 
 void Game::insertBlock() {
-    const auto& shape = block.getShape();
-    const auto& color = block.getColor();
+    const auto &shape = block.getShape();
+    const auto &color = block.getColor();
     int startRow = block.getStartRow();
     int startColumn = block.getStartColumn();
-    for (int column = 0; column < shape.size(); column ++) {
-        for (int row = 0; row < shape.size(); row ++) {
+    for (int column = 0; column < shape.size(); column++) {
+        for (int row = 0; row < shape.size(); row++) {
             if (shape[column][row] == 1) {
                 grid.fill(startRow + row, startColumn + column, color);
             }
@@ -26,24 +27,27 @@ void Game::insertBlock() {
 
 void Game::processEvents() {
     sf::Event event;
-    sf::RenderWindow& window = ui.getWindow();
+    sf::RenderWindow &window = ui.getWindow();
     while (window.pollEvent(event)) {
 //            std::cout << gravity.getFallTime() << std::endl;
         if (event.type == sf::Event::Closed)
             window.close();
         else if (event.type == sf::Event::KeyPressed) {
-            if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+            if (event.key.scancode == sf::Keyboard::Scan::I) {
+                isAiActive = !isAiActive;
+                firstBlock = !firstBlock;
+            } else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                 window.close();
             } else if (event.key.scancode == sf::Keyboard::Scan::W) {
                 bool state = block.rotate(grid);
-                if (isTouchedGround && state) movement ++, lockDelayTime = 0;
+                if (isTouchedGround && state) movement++, lockDelayTime = 0;
                 //rotate the block
             } else if (event.key.scancode == sf::Keyboard::Scan::A) {
                 bool state = block.moveLeft(grid);
-                if (isTouchedGround && state) movement ++, lockDelayTime = 0;
+                if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::D) {
                 bool state = block.moveRight(grid);
-                if (isTouchedGround && state) movement ++, lockDelayTime = 0;
+                if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::S) {
                 gravity.setSoftDrop();
             } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
@@ -63,7 +67,7 @@ void Game::processEvents() {
             if (event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 auto [gridColumn, gridRow] = mousePositionToGridPosition(mousePosition.x, mousePosition.y);
-                grid.fill(gridRow,  gridColumn, sf::Color{0x333333ff});
+                grid.fill(gridRow, gridColumn, sf::Color{0x333333ff});
             } else if (event.mouseButton.button == sf::Mouse::Right) {
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 auto [gridColumn, gridRow] = mousePositionToGridPosition(mousePosition.x, mousePosition.y);
@@ -72,6 +76,8 @@ void Game::processEvents() {
         }
     }
 }
+
+#include <iostream>
 
 void Game::tick() {
     //key events
@@ -86,8 +92,37 @@ void Game::tick() {
     }
 
     Block transparentBlock = block.getTransparentBlock();
-    while(transparentBlock.moveDown(grid));
-    if (isHardDrop) {while(block.moveDown(grid));}
+    while (transparentBlock.moveDown(grid));
+    if (firstBlock && isAiActive) {
+        firstBlock = false;
+        auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
+//        std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: " << temBlock.getStartColumn()
+//                  << std::endl;
+//        std::cout << aiScore << std::endl;
+        aiMovement = simulateMovement(temBlock);
+//        std::cout << score << '\n';
+    }
+    //no movement limitation AI
+    while (isAiActive && !aiMovement.empty()) {
+        const Movement &movement = aiMovement.front();
+        aiMovement.pop();
+        if (movement == Movement::Rotate) {
+//            std::cout << "Rotate" << std::endl;
+            block.rotate(grid);
+        } else if (movement == Movement::Left) {
+//            std::cout << "Left" << std::endl;
+            block.moveLeft(grid);
+        } else if (movement == Movement::Right) {
+//            std::cout << "Right" << std::endl;
+            block.moveRight(grid);
+        } else if (movement == Movement::Down) {
+//            std::cout << "Down" << std::endl;
+            while (block.moveDown(grid));
+            isHardDrop = true;
+        }
+    }
+
+    if (isHardDrop) { while (block.moveDown(grid)); }
 
     if (block.touch(grid)) {
         if (isLockDelay && !isHardDrop) {
@@ -99,7 +134,17 @@ void Game::tick() {
                     isHold = false;
                     if (grid.exceed()) {
                         stop();
-                    } else block = generator.nextBlock();
+                    } else {
+                        block = generator.nextBlock();
+                        if (isAiActive) {
+                            auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
+//                            std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: "
+//                                      << temBlock.getStartColumn() << std::endl;
+//                            std::cout << aiScore << std::endl;
+                            aiMovement = simulateMovement(temBlock);
+//                            std::cout << score << '\n';
+                        };
+                    }
                     gravity.unsetSoftDrop();
                     lockDelayTime = movement = 0;
 
@@ -115,7 +160,18 @@ void Game::tick() {
             gravity.unsetSoftDrop();
             if (grid.exceed()) {
                 stop();
-            } else block = generator.nextBlock();
+            } else {
+                block = generator.nextBlock();
+
+                if (isAiActive) {
+                    auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
+//                    std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: "
+//                              << temBlock.getStartColumn() << std::endl;
+//                    std::cout << aiScore << std::endl;
+                    aiMovement = simulateMovement(temBlock);
+//                    std::cout << score << '\n';
+                }
+            }
         }
     } else {
         isTouchedGround = false;
@@ -139,7 +195,7 @@ void Game::hold() {
 }
 
 std::pair<int, int> Game::mousePositionToGridPosition(float x, float y) {
-    return {(int)(x - 200) / 31, (int)(675 - y - 25) / 31,  };
+    return {(int) (x - 200) / 31, (int) (675 - y - 25) / 31,};
 }
 
 ScoreType Game::addScore() {
@@ -171,20 +227,20 @@ ScoreType Game::addScore() {
     }
     if (isDifficultScore(scoreType)) {
         if (backToBack) score += 1.5 * scoreTypeToInt(scoreType);
-        else score +=  scoreTypeToInt(scoreType);
+        else score += scoreTypeToInt(scoreType);
         backToBack = true;
-        comboCount ++;
+        comboCount++;
     } else if (scoreType == ScoreType::Single || scoreType == ScoreType::Double || scoreType == ScoreType::Triple) {
-        score +=  scoreTypeToInt(scoreType);
+        score += scoreTypeToInt(scoreType);
         backToBack = false;
-        comboCount ++;
+        comboCount++;
         backToBack = false;
     } else {
-        score +=  scoreTypeToInt(scoreType);
+        score += scoreTypeToInt(scoreType);
         comboCount = 0;
     }
     if (comboCount >= 2) {
-        score += (comboCount - 1) *  scoreTypeToInt(ScoreType::Combo);
+        score += (comboCount - 1) * scoreTypeToInt(ScoreType::Combo);
     }
     gravity.addLines(lines);
     grid.clearLines();
@@ -193,14 +249,15 @@ ScoreType Game::addScore() {
 
 bool Game::TSpin() const {
     if (block.getType() != BlockType::T || block.getLastMovement() != Movement::Rotate) return false;
-    const auto& shape = block.getShape();
+    const auto &shape = block.getShape();
     auto [startRow, startColumn] = block.getPosition();
     int count = grid.isOccupied(startRow, startColumn) + grid.isOccupied(startRow + 2, startColumn) +
                 grid.isOccupied(startRow, startColumn + 2) + grid.isOccupied(startRow + 2, startColumn + 2);
     return count >= 3;
 }
 
-Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(){
+Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
+               ai(0.510066, 0.760666, 0.35663, 0.184483) {
     block = generator.nextBlock();
 }
 
@@ -216,6 +273,7 @@ bool Game::shouldClose() {
     return !ui.getWindow().isOpen();
 }
 
+//FIXME::restart error
 void Game::restart() {
     isRunning = true;
     score = 0;
@@ -257,8 +315,10 @@ void Game::close() {
 }
 
 bool Game::isDifficultScore(const ScoreType &scoreType) const {
-    if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle || scoreType == ScoreType::TSpinMiniDouble ||
-        scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble || scoreType == ScoreType::TSpinTriple) {
+    if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle ||
+        scoreType == ScoreType::TSpinMiniDouble ||
+        scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble ||
+        scoreType == ScoreType::TSpinTriple) {
         return true;
     }
     return false;
@@ -284,4 +344,25 @@ int Game::scoreTypeToInt(ScoreType scoreType) {
     else if (scoreType == ScoreType::TetrisPerfectClear) return 2000;
     else if (scoreType == ScoreType::BackToBackTetrisPerfectClear) return 3200;
     else return 0;
+}
+
+std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
+    std::queue<Movement> movements;
+
+    Block temBlock = this->block;
+    while (temBlock.getRotation() != aiBlock.getRotation()) {
+        movements.push(Movement::Rotate);
+        temBlock.rotate(grid);
+    }
+    auto [aiRow, aiColumn] = aiBlock.getPosition();
+    auto [blockRow, blockColumn] = temBlock.getPosition();
+    if (aiColumn > blockColumn) {
+        for (int i = 0; i < aiColumn - blockColumn; i++) movements.push(Movement::Right);
+    } else if (aiColumn < blockColumn) {
+        for (int i = 0; i < blockColumn - aiColumn; i++) movements.push(Movement::Left);
+    }
+
+
+    movements.push(Movement::Down);
+    return movements;
 }

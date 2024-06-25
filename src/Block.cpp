@@ -393,3 +393,7 @@ bool Block::checkMiniTSpin(const Grid &grid) const {
 bool Block::valid(const Grid &grid) const {
     return isValid(startRow, startColumn, grid);
 }
+
+int Block::getRotation() const {
+    return rotation;
+}

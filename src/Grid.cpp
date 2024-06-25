@@ -165,8 +165,10 @@ int Grid::bumpiness() const {
 int Grid::holes() const {
     int holes = 0;
     for (int column = 0; column < columnSize; column ++) {
-        for (int row = 0; row < rowSize; row ++) {
-            if (!grid[column][row] && grid[column][row + 1]) holes ++;
+        bool isBlock = false;
+        for (int row = rowSize - 1; row >= 0; row --) {
+            if (grid[column][row]) isBlock = true;
+            if (!grid[column][row] && isBlock) holes ++;
         }
     }
     return holes;

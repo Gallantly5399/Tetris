@@ -89,10 +89,12 @@ public:
     bool valid(const Grid& grid) const;
     Movement getLastMovement() const;
     bool getSrs() const;
-private:
-    void rotateCounterClockwise();
-    //just rotate in the local coordinate
+    int getRotation() const;
     void rotate();
+    void rotateCounterClockwise();
+
+private:
+    //just rotate in the local coordinate
     std::vector<std::vector<int>> shape;
     BlockType type;
     sf::Color color;

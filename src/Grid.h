@@ -11,6 +11,25 @@ class Grid {
 public:
     Grid(int columnSize, int rowSize);
     Grid() = delete;
+    //copy constructor
+    Grid(const Grid &grid) {
+        this->columnSize = grid.columnSize;
+        this->rowSize = grid.rowSize;
+        this->grid = grid.grid;
+        this->colors = grid.colors;
+    }
+    //copy assignment
+    Grid &operator=(const Grid &grid) {
+        this->columnSize = grid.columnSize;
+        this->rowSize = grid.rowSize;
+        this->grid = grid.grid;
+        this->colors = grid.colors;
+        return *this;
+    }
+
+
+
+
     //resize the grid
     void resize(int columnSize, int rowSize);
     //if (row, column) is occupied

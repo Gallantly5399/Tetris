@@ -6,8 +6,19 @@
 #include "Grid.h"
 #include <random>
 #include "Block.h"
-#include "Game.h"
-
+static void insertBlock(Grid& grid, const Block& block) {
+    const auto& shape = block.getShape();
+    const auto& color = block.getColor();
+    int startRow = block.getStartRow();
+    int startColumn = block.getStartColumn();
+    for (int column = 0; column < shape.size(); column ++) {
+        for (int row = 0; row < shape.size(); row ++) {
+            if (shape[column][row] == 1) {
+                grid.fill(startRow + row, startColumn + column, color);
+            }
+        }
+    }
+}
 class AI {
 public:
     AI(double heightWeight, double linesWeight, double holesWeight, double bumpinessWeight) {
@@ -23,13 +34,14 @@ public:
         return this->best(grid, workingPieces, 0);
     }
 private:
+
     double heightWeight;
     double linesWeight;
     double holesWeight;
     double bumpinessWeight;
     std::pair<Block, double> best(const Grid& grid, const std::vector<Block>& workingPieces, int workingPieceIndex) {
         double bestScore = std::numeric_limits<double>::lowest();
-        Block bestBlock{};
+        Block bestBlock(workingPieces[workingPieceIndex].getType());
         const Block& workingPiece = workingPieces[workingPieceIndex];
 
         for (int rotation = 0; rotation < 4; rotation++) {
@@ -39,6 +51,7 @@ private:
             }
 
             while (_piece.moveLeft(grid)) ;
+            int count = 0;
             do{
                 Block _pieceSet = _piece;
                 while (_pieceSet.moveDown(grid));
@@ -50,6 +63,7 @@ private:
                 if (workingPieceIndex == (workingPieces.size() - 1)) {
                     score = -heightWeight * _grid.aggregateHeight() + linesWeight * _grid.lines() -
                             holesWeight * _grid.holes() - bumpinessWeight * _grid.bumpiness();
+//                    std::cout << "Rotation: " << rotation << "Count: " << count << ", score: " << score << std::endl;
                 } else {
                     score = best(_grid, workingPieces, workingPieceIndex + 1).second;
                 }
@@ -61,11 +75,9 @@ private:
                     bestBlock = _piece;
                 }
                 auto [startRow, startColumn] = _piece.getPosition();
-                if (!_piece.isValid(startRow, startColumn + 1, grid)) break;
-                _piece.setStartColumn(startColumn + 1);
-//                if (!_piece.moveRight(grid)) break;
-//                count ++;
-//                std::cout << count << std::endl;
+//                if (!_piece.isValid(startRow, startColumn + 1, grid)) break;
+//                _piece.setStartColumn(startColumn + 1);
+                count++;
             }while(_piece.moveRight(grid));
         }
         return {bestBlock, bestScore};

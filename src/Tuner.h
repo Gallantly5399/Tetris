@@ -175,8 +175,10 @@ public:
     */
     void run() {
         std::vector<Candidate> candidates;
+        candidates.push_back({0.510066, 0.760666, 0.35663, 0.184483});
+
         // Initial population generation
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 99; i++) {
             candidates.emplace_back(generateRandomCandidate());
         }
 
