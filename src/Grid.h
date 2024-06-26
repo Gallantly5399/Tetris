@@ -42,9 +42,6 @@ public:
         return *this;
     }
 
-
-
-
     //resize the grid
     void resize(int columnSize, int rowSize);
     //if (row, column) is occupied

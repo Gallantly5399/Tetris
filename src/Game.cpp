@@ -357,26 +357,26 @@ int Game::scoreTypeToInt(ScoreType scoreType) {
     else return 0;
 }
 
-std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
-    std::queue<Movement> movements;
-
-    Block temBlock = this->block;
-    while (temBlock.getRotation() != aiBlock.getRotation()) {
-        movements.push(Movement::Rotate);
-        temBlock.rotate(grid);
-    }
-    auto [aiRow, aiColumn] = aiBlock.getPosition();
-    auto [blockRow, blockColumn] = temBlock.getPosition();
-    if (aiColumn > blockColumn) {
-        for (int i = 0; i < aiColumn - blockColumn; i++) movements.push(Movement::Right);
-    } else if (aiColumn < blockColumn) {
-        for (int i = 0; i < blockColumn - aiColumn; i++) movements.push(Movement::Left);
-    }
-
-
-    movements.push(Movement::Down);
-    return movements;
-}
+//std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
+//    std::queue<Movement> movements;
+//
+//    Block temBlock = this->block;
+//    while (temBlock.getRotation() != aiBlock.getRotation()) {
+//        movements.push(Movement::Rotate);
+//        temBlock.rotate(grid);
+//    }
+//    auto [aiRow, aiColumn] = aiBlock.getPosition();
+//    auto [blockRow, blockColumn] = temBlock.getPosition();
+//    if (aiColumn > blockColumn) {
+//        for (int i = 0; i < aiColumn - blockColumn; i++) movements.push(Movement::Right);
+//    } else if (aiColumn < blockColumn) {
+//        for (int i = 0; i < blockColumn - aiColumn; i++) movements.push(Movement::Left);
+//    }
+//
+//
+//    movements.push(Movement::Down);
+//    return movements;
+//}
 
 Game::~Game() {
     ai.stop();
