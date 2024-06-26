@@ -84,7 +84,6 @@ void Game::processEvents() {
 #include <iostream>
 
 void Game::tick() {
-    //key events
     isHardDrop = false;
     processEvents();
     if (!isRunning) return;
