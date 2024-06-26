@@ -31,6 +31,5 @@ int main() {
     while(!game.shouldClose()) {
         game.run();
     }
-    game.close();
 }
 

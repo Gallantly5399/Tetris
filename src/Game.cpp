@@ -36,7 +36,9 @@ void Game::processEvents() {
             if (event.key.scancode == sf::Keyboard::Scan::I) {
                 isAiActive = !isAiActive;
                 firstBlock = !firstBlock;
-            } else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+            }
+            if (isAiActive) return;
+            if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                 window.close();
             } else if (event.key.scancode == sf::Keyboard::Scan::W) {
                 bool state = block.rotate(grid);
@@ -60,10 +62,12 @@ void Game::processEvents() {
                 restart();
             }
         } else if (event.type == sf::Event::KeyReleased) {
+            if (isAiActive) return;
             if (event.key.scancode == sf::Keyboard::Scan::S) {
                 gravity.unsetSoftDrop();
             }
         } else if (event.type == sf::Event::MouseButtonPressed) {
+            if (isAiActive) return;
             if (event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 auto [gridColumn, gridRow] = mousePositionToGridPosition(mousePosition.x, mousePosition.y);
@@ -273,7 +277,6 @@ bool Game::shouldClose() {
     return !ui.getWindow().isOpen();
 }
 
-//FIXME::restart error
 void Game::restart() {
     isRunning = true;
     score = 0;
@@ -282,6 +285,12 @@ void Game::restart() {
     gravity.clear();
     generator.clear();
     block = generator.nextBlock();
+    firstBlock = false;
+    backToBack = false;
+    comboCount = 0;
+    clock.restart();
+    aiClock.restart();
+    isHold = false;
 }
 
 void Game::draw() {
@@ -365,4 +374,8 @@ std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
 
     movements.push(Movement::Down);
     return movements;
+}
+
+Game::~Game() {
+    ui.getWindow().close();
 }

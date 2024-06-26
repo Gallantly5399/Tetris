@@ -26,7 +26,7 @@ public:
     void hold();
     bool shouldStop();
     bool shouldClose();
-
+    ~Game();
     void run();
     void close();
     int scoreTypeToInt(ScoreType scoreType);

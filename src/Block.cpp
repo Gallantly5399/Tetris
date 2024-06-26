@@ -90,6 +90,7 @@ bool Block::rotate(const Grid& grid) {
 }
 
 Block::Block(BlockType type) : type(type) {
+    if (type == BlockType::None) return;
     if (type == BlockType::I) {
         shape = {
                 {0, 0, 0, 0, 0},
