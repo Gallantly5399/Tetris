@@ -6,6 +6,26 @@
 #include "Grid.h"
 #include <random>
 #include "Block.h"
+struct MovementData{
+    std::vector<Movement> data;
+    int readIndex = 0;
+    int writeIndex = 0;
+    void write(Movement movement) {
+        data[writeIndex] = movement;
+        writeIndex++;
+        if (writeIndex == data.size()) writeIndex = 0;
+    }
+    Movement read() {
+        Movement movement = data[readIndex];
+        readIndex++;
+        if (readIndex == data.size()) readIndex = 0;
+        return movement;
+    }
+    bool empty() const{
+        return readIndex == writeIndex;
+    }
+};
+
 static void insertBlock(Grid& grid, const Block& block) {
     const auto& shape = block.getShape();
     const auto& color = block.getColor();
@@ -27,19 +47,51 @@ public:
         this->holesWeight = holesWeight;
         this->bumpinessWeight = bumpinessWeight;
     }
-    std::pair<Block, double> best(const Grid& grid, const std::vector<Block>& workingPieces) {
-//        for (auto &i : workingPieces) {
-//            std::cout << static_cast<int>(i.getType()) << std::endl;
-//        }
-        return this->best(grid, workingPieces, 0);
+    void best(MovementData& movements) {
+        while(true) {
+            if (isStop) return;
+            if (blockQueue.empty()) continue;
+            auto [workingPieces, grid] = blockQueue.front();
+            blockQueue.pop();
+            Block bestBlock = this->best_(grid, workingPieces, 0).first;
+            Block temBlock = workingPieces[0];
+            if (bestBlock.getType() == BlockType::None) {
+                movements.write(Movement::Down);
+                return;
+            }
+            while (temBlock.getRotation() != bestBlock.getRotation()) {
+                movements.write(Movement::Rotate);
+                temBlock.rotate(grid);
+            }
+            auto [aiRow, aiColumn] = bestBlock.getPosition();
+            auto [blockRow, blockColumn] = temBlock.getPosition();
+            if (aiColumn > blockColumn) {
+                for (int i = 0; i < aiColumn - blockColumn; i++) movements.write(Movement::Right);
+            } else if (aiColumn < blockColumn) {
+                for (int i = 0; i < blockColumn - aiColumn; i++) movements.write(Movement::Left);
+            }
+            movements.write(Movement::Down);
+        }
+    }
+    bool stop() {
+        isStop = true;
+    }
+    long long limitation() {
+        return movementLimit;
+    }
+    void add(std::vector<Block> blocks, Grid grid) {
+        blockQueue.push({blocks, grid});
     }
 private:
-
+    std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
+    bool isStop = false;
+    //millisecond time for per block
+    long long movementLimit = 0;
     double heightWeight;
     double linesWeight;
     double holesWeight;
     double bumpinessWeight;
-    std::pair<Block, double> best(const Grid& grid, const std::vector<Block>& workingPieces, int workingPieceIndex) {
+    std::pair<Block, double> best_(const Grid& grid, const std::vector<Block>& workingPieces, int workingPieceIndex) {
         //TODO:: beam search instead of dfs
         double bestScore = std::numeric_limits<double>::lowest();
         Block bestBlock(workingPieces[workingPieceIndex].getType());
@@ -54,6 +106,7 @@ private:
             while (_piece.moveLeft(grid)) ;
             int count = 0;
             do{
+                if (isStop) return {bestBlock, bestScore};
                 Block _pieceSet = _piece;
                 while (_pieceSet.moveDown(grid));
 
@@ -66,7 +119,7 @@ private:
                             holesWeight * _grid.holes() - bumpinessWeight * _grid.bumpiness();
 //                    std::cout << "Rotation: " << rotation << "Count: " << count << ", score: " << score << std::endl;
                 } else {
-                    score = best(_grid, workingPieces, workingPieceIndex + 1).second;
+                    score = best_(_grid, workingPieces, workingPieceIndex + 1).second;
                 }
 
 //                auto [startRow1, startColumn1] = _piece.getPosition();
