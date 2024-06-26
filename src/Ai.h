@@ -8,6 +8,7 @@
 #include "Block.h"
 #include <queue>
 #include <iostream>
+#include <thread>
 
 struct MovementData{
     std::vector<Movement> data;
@@ -55,8 +56,8 @@ public:
         this->bumpinessWeight = bumpinessWeight;
     }
     void best(MovementData& movements) {
-        while(true) {
-            if (isStop) return;
+        while(!isStop) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if (blockQueue.empty()) continue;
             auto [workingPieces, grid] = blockQueue.front();
             blockQueue.pop();
