@@ -30,7 +30,6 @@ public:
     void run();
     void close();
     int scoreTypeToInt(ScoreType scoreType);
-    ~Game();
 private:
     //column row
     std::pair<int, int> mousePositionToGridPosition(float x, float y);

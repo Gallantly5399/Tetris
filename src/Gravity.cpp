@@ -27,7 +27,7 @@ void Gravity::levelUp() {
 
 double Gravity::getFallTime() const {
     if (isSoftDrop) {
-        int tempLevel = std::min(level + 5, 15);
+        int tempLevel = std::min(level + 7, 15);
         return std::pow((0.8-((tempLevel + 5-1)*0.007)), (tempLevel - 1));
     }
     if (noGravity) return std::numeric_limits<double>::max();

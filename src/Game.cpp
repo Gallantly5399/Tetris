@@ -36,10 +36,11 @@ void Game::processEvents() {
                 isAiActive = !isAiActive;
                 firstBlock = !firstBlock;
             }
-            if (isAiActive) return;
             if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                 window.close();
-            } else if (event.key.scancode == sf::Keyboard::Scan::W) {
+            }
+            if (isAiActive) return;
+            if (event.key.scancode == sf::Keyboard::Scan::W) {
                 bool state = block.rotate(grid);
                 if (isTouchedGround && state) movement++, lockDelayTime = 0;
                 //rotate the block
@@ -90,11 +91,8 @@ void Game::tick() {
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
     if (time >= gravity.getFallTime()) {
-        int count = (int)std::floor(time / gravity.getFallTime());
-        for (int i = 0;i < count;i ++) {
-            block.moveDown(grid);
-        }
-        time -= count * gravity.getFallTime();
+        block.moveDown(grid);
+        time = 0;
     }
 
     Block transparentBlock = block.getTransparentBlock();
@@ -171,7 +169,6 @@ void Game::tick() {
                 block = generator.nextBlock();
 
                 if (isAiActive) {
-                    //TODO::AI
                     std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
                     ai.add(workingPieces, grid);
                 }
@@ -265,8 +262,8 @@ Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
     aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     clock.restart();
-    aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
     aiMovement.data.resize(1000);
+    aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
 }
 
 void Game::stop() {
@@ -295,6 +292,7 @@ void Game::restart() {
     clock.restart();
     aiClock.restart();
     isHold = false;
+    aiMovement.clear();
 }
 
 void Game::draw() {

@@ -1,14 +1,6 @@
 #include <iostream>
 
-#include "Block.h"
-#include "Grid.h"
 #include "Game.h"
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <random>
-#include "Gravity.h"
-#include <filesystem>
-#include "Generator.h"
 
 //SFML coordinate system
 // -----------x
@@ -25,7 +17,6 @@
 // |
 // |
 // -----------x
-#include "Tuner.h"
 int main() {
     Game game{};
     while(!game.shouldClose()) {

@@ -6,6 +6,9 @@
 #include "Grid.h"
 #include <random>
 #include "Block.h"
+#include <queue>
+#include <iostream>
+
 struct MovementData{
     std::vector<Movement> data;
     int readIndex = 0;
@@ -20,6 +23,10 @@ struct MovementData{
         readIndex++;
         if (readIndex == data.size()) readIndex = 0;
         return movement;
+    }
+    void clear() {
+        readIndex = 0;
+        writeIndex = 0;
     }
     bool empty() const{
         return readIndex == writeIndex;
@@ -128,7 +135,6 @@ private:
                     bestScore = score;
                     bestBlock = _piece;
                 }
-                auto [startRow, startColumn] = _piece.getPosition();
 //                if (!_piece.isValid(startRow, startColumn + 1, grid)) break;
 //                _piece.setStartColumn(startColumn + 1);
                 count++;
