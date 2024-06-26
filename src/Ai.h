@@ -40,6 +40,7 @@ private:
     double holesWeight;
     double bumpinessWeight;
     std::pair<Block, double> best(const Grid& grid, const std::vector<Block>& workingPieces, int workingPieceIndex) {
+        //TODO:: beam search instead of dfs
         double bestScore = std::numeric_limits<double>::lowest();
         Block bestBlock(workingPieces[workingPieceIndex].getType());
         const Block& workingPiece = workingPieces[workingPieceIndex];

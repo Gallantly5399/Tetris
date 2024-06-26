@@ -257,7 +257,7 @@ bool Game::TSpin() const {
 }
 
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
-               ai(0.510066, 0.760666, 0.35663, 0.184483) {
+               ai(0.42863, 0.46455, 0.744134, 0.216181) {
     block = generator.nextBlock();
 }
 

@@ -16,6 +16,7 @@ struct Candidate {
     double holesWeight;
     double bumpinessWeight;
     int fitness;
+    long long score;
 };
 
 class Tuner {
@@ -28,7 +29,7 @@ public:
         gen = std::mt19937(rd());
     }
 
-    void normalize(Candidate &candidate) {
+    static void normalize(Candidate &candidate) {
         double norm = std::sqrt(
                 candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight +
                 candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight);
@@ -52,9 +53,9 @@ public:
         return candidate;
     }
 
-    void computeFitnesses(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves) {
+    static void computeFitnesses(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves) {
         for (int i = 0; i < candidates.size(); i++) {
-            Candidate candidate = candidates[i];
+            Candidate& candidate = candidates[i];
             AI *ai = new AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight,
                             candidate.bumpinessWeight);
             int totalScore = 0;
@@ -67,18 +68,14 @@ public:
                 int score = 0;
                 int numberOfMoves = 0;
                 while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
-//                    std::cout << "Current Game:" << j << ", Current Move:" << numberOfMoves << std::endl;
                     workingPiece = ai->best(grid, workingPieces).first;
-                    bool first = false;
                     while (workingPiece.moveDown(grid));
-
                     insertBlock(grid, workingPiece);
                     score += grid.clearLines();
                     for (int k = 0; k < workingPieces.size() - 1; k++) {
                         workingPieces[k] = workingPieces[k + 1];
                     }
                     workingPieces[workingPieces.size() - 1] = rpg.nextBlock();
-                    workingPiece = workingPieces[0];
                 }
                 totalScore += score;
             }
@@ -115,7 +112,7 @@ public:
         return {candidates[fittestCandidateIndex1], candidates[fittestCandidateIndex2]};
     }
 
-    Candidate crossOver(Candidate candidate1, Candidate candidate2) {
+    static Candidate crossOver(const Candidate& candidate1, const Candidate& candidate2) {
         double totalFitness = candidate1.fitness + candidate2.fitness;
         double coefficient1 = 0, coefficient2 = 0;
         if (totalFitness == 0) {
@@ -156,7 +153,7 @@ public:
         }
     }
 
-    void deleteNLastReplacement(std::vector<Candidate> &candidates, const std::vector<Candidate> &newCandidates) {
+    static void deleteNLastReplacement(std::vector<Candidate> &candidates, const std::vector<Candidate> &newCandidates) {
         for (int i = 0; i < newCandidates.size(); i++) candidates.pop_back();
         for (int i = 0; i < newCandidates.size(); i++) {
             candidates.push_back(newCandidates[i]);
@@ -174,17 +171,14 @@ public:
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
     void run() {
+        //TODO:: add concurrency
         std::vector<Candidate> candidates;
-        candidates.push_back({0.510066, 0.760666, 0.35663, 0.184483});
-
         // Initial population generation
-        for (int i = 0; i < 99; i++) {
+        for (int i = 0; i < 100; i++) {
             candidates.emplace_back(generateRandomCandidate());
         }
 
-        std::cout << "Computing fitnesses of initial population...\n";
         computeFitnesses(candidates, 5, 200);
-        //FIXME::
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
             return a.fitness > b.fitness;
         });
@@ -201,7 +195,7 @@ public:
                 Candidate candidate = crossOver(pair.first, pair.second);
 //                std::cout << "Crossed: ";
 //                output(candidate);
-                if (randomDouble(0, 1) < 0.05) {
+                if (randomInteger(1, 100) <= 5) {
                     mutate(candidate);
 //                    output(candidate);
                 }
