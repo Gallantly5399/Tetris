@@ -7,6 +7,7 @@
 #include <random>
 #include <cmath>
 #include <algorithm>
+#include "Generator.h"
 
 #include "Ai.h"
 
