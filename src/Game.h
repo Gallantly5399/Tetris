@@ -11,7 +11,7 @@
 #include "Gravity.h"
 #include "Ai.h"
 #include "Generator.h"
-#include <queue>
+#include <thread>
 
 
 class Game {
@@ -30,6 +30,7 @@ public:
     void run();
     void close();
     int scoreTypeToInt(ScoreType scoreType);
+    ~Game();
 private:
     //column row
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
@@ -69,8 +70,9 @@ private:
     void stop();
     bool isDifficultScore(const ScoreType& scoreType) const;
     std::queue<Movement> simulateMovement(const Block& aiBlock);
-    std::queue<Movement> aiMovement;
+    MovementData aiMovement;
     bool firstBlock = false;
     sf::Clock aiClock;
-    double aiLastMoveTime = 0;
+    long long aiLastMoveTime = 0;
+    std::thread aiThread;
 };

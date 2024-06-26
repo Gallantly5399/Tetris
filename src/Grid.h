@@ -26,6 +26,21 @@ public:
         this->colors = grid.colors;
         return *this;
     }
+    //move constructor
+    Grid(Grid &&grid) noexcept {
+        this->columnSize = grid.columnSize;
+        this->rowSize = grid.rowSize;
+        this->grid = std::move(grid.grid);
+        this->colors = std::move(grid.colors);
+    }
+    //move assignment
+    Grid &operator=(Grid &&grid) noexcept {
+        this->columnSize = grid.columnSize;
+        this->rowSize = grid.rowSize;
+        this->grid = std::move(grid.grid);
+        this->colors = std::move(grid.colors);
+        return *this;
+    }
 
 
 

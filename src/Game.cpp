@@ -3,7 +3,6 @@
 //
 
 #include "Game.h"
-
 #ifndef NDEBUG
 #define Debug(x) (std::cerr << #x << ": " << (x) << std::endl)
 #else
@@ -91,39 +90,46 @@ void Game::tick() {
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
     if (time >= gravity.getFallTime()) {
-        block.moveDown(grid);
-        time = 0;
+        int count = (int)std::floor(time / gravity.getFallTime());
+        for (int i = 0;i < count;i ++) {
+            block.moveDown(grid);
+        }
+        time -= count * gravity.getFallTime();
     }
 
     Block transparentBlock = block.getTransparentBlock();
     while (transparentBlock.moveDown(grid));
     if (firstBlock && isAiActive) {
         firstBlock = false;
-        auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
-//        std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: " << temBlock.getStartColumn()
-//                  << std::endl;
-//        std::cout << aiScore << std::endl;
-        aiMovement = simulateMovement(temBlock);
-//        std::cout << score << '\n';
+        std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+        ai.add(workingPieces, grid);
     }
-    //no movement limitation AI
-    while (isAiActive && !aiMovement.empty()) {
-        const Movement &movement = aiMovement.front();
-        aiMovement.pop();
-        if (movement == Movement::Rotate) {
+    long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    long long durationTime = currentTime - aiLastMoveTime;
+    while (isAiActive && durationTime > ai.limitation() && !aiMovement.empty()) {
+        int count;
+        if (ai.limitation() == 0) count = std::numeric_limits<int>::max();
+        else count = durationTime / ai.limitation();
+        while(!aiMovement.empty() && count > 0) {
+            const Movement &currentMovement = aiMovement.read();
+            if (currentMovement == Movement::Rotate) {
 //            std::cout << "Rotate" << std::endl;
-            block.rotate(grid);
-        } else if (movement == Movement::Left) {
+                block.rotate(grid);
+            } else if (currentMovement == Movement::Left) {
 //            std::cout << "Left" << std::endl;
-            block.moveLeft(grid);
-        } else if (movement == Movement::Right) {
+                block.moveLeft(grid);
+            } else if (currentMovement == Movement::Right) {
 //            std::cout << "Right" << std::endl;
-            block.moveRight(grid);
-        } else if (movement == Movement::Down) {
+                block.moveRight(grid);
+            } else if (currentMovement == Movement::Down) {
 //            std::cout << "Down" << std::endl;
-            while (block.moveDown(grid));
-            isHardDrop = true;
+                while (block.moveDown(grid));
+                isHardDrop = true;
+                count --;
+            }
         }
+        aiLastMoveTime = currentTime;
     }
 
     if (isHardDrop) { while (block.moveDown(grid)); }
@@ -141,12 +147,9 @@ void Game::tick() {
                     } else {
                         block = generator.nextBlock();
                         if (isAiActive) {
-                            auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
-//                            std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: "
-//                                      << temBlock.getStartColumn() << std::endl;
-//                            std::cout << aiScore << std::endl;
-                            aiMovement = simulateMovement(temBlock);
-//                            std::cout << score << '\n';
+                            //TODO::AI
+                            std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+                            ai.add(workingPieces, grid);
                         };
                     }
                     gravity.unsetSoftDrop();
@@ -168,12 +171,9 @@ void Game::tick() {
                 block = generator.nextBlock();
 
                 if (isAiActive) {
-                    auto [temBlock, aiScore] = ai.best(grid, {block, generator.seeNextBlocks(1)[0]});
-//                    std::cout << "PositionRow: " << temBlock.getStartRow() << ' ' << "PositionColumn: "
-//                              << temBlock.getStartColumn() << std::endl;
-//                    std::cout << aiScore << std::endl;
-                    aiMovement = simulateMovement(temBlock);
-//                    std::cout << score << '\n';
+                    //TODO::AI
+                    std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+                    ai.add(workingPieces, grid);
                 }
             }
         }
@@ -210,7 +210,6 @@ ScoreType Game::addScore() {
     //T-spin
     if (TSpin()) {
         //T-spin mini
-        //FIXME::may be wrong here
         if (isSrs || block.checkMiniTSpin(grid)) {
             if (lines == 0) scoreType = ScoreType::TSpinMiniNoLines;
             else if (lines == 1) scoreType = ScoreType::TSpinMiniSingle;
@@ -263,6 +262,11 @@ bool Game::TSpin() const {
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
                ai(0.42863, 0.46455, 0.744134, 0.216181) {
     block = generator.nextBlock();
+    aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    clock.restart();
+    aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
+    aiMovement.data.resize(1000);
 }
 
 void Game::stop() {
@@ -377,5 +381,7 @@ std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
 }
 
 Game::~Game() {
+    ai.stop();
+    if (aiThread.joinable()) aiThread.join();
     ui.getWindow().close();
 }

@@ -68,7 +68,8 @@ public:
                 int score = 0;
                 int numberOfMoves = 0;
                 while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
-                    workingPiece = ai->best(grid, workingPieces).first;
+                    //TODO::ai thread
+//                    workingPiece = ai->best(grid, workingPieces).first;
                     while (workingPiece.moveDown(grid));
                     insertBlock(grid, workingPiece);
                     score += grid.clearLines();
