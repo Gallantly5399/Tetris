@@ -16,7 +16,6 @@ struct Candidate {
     double holesWeight;
     double bumpinessWeight;
     int fitness;
-    long long score;
 };
 
 class Tuner {
