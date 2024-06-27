@@ -8,6 +8,6 @@ SFML
 
 ## Build
 ```
-cmake -B build -S .
+cmake -DCMAKE_BUILD_TYPE=Release -B build -S .
 cmake --build build
 ```
