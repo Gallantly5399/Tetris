@@ -81,7 +81,7 @@ public:
             movements.write(Movement::Down);
         }
     }
-    bool stop() {
+    void stop() {
         isStop = true;
     }
     long long limitation() {
