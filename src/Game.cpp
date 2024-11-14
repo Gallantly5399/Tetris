@@ -90,7 +90,7 @@ void Game::tick() {
     time += passedTime;
     if (time >= gravity.getFallTime()) {
         block.moveDown(grid);
-        time = 0;
+        time -= gravity.getFallTime();
     }
 
     Block transparentBlock = block.getTransparentBlock();
@@ -99,34 +99,53 @@ void Game::tick() {
         firstBlock = false;
         std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
         ai.add(workingPieces, grid);
+        aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
     }
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     long long durationTime = currentTime - aiLastMoveTime;
-    while (isAiActive && durationTime > ai.limitation() && !aiMovement.empty()) {
-        int count;
-        if (ai.limitation() == 0) count = std::numeric_limits<int>::max();
-        else count = durationTime / ai.limitation();
-        while(!aiMovement.empty() && count > 0) {
-            const Movement &currentMovement = aiMovement.read();
-            if (currentMovement == Movement::Rotate) {
-//            std::cout << "Rotate" << std::endl;
-                block.rotate(grid);
-            } else if (currentMovement == Movement::Left) {
-//            std::cout << "Left" << std::endl;
-                block.moveLeft(grid);
-            } else if (currentMovement == Movement::Right) {
-//            std::cout << "Right" << std::endl;
-                block.moveRight(grid);
-            } else if (currentMovement == Movement::Down) {
-//            std::cout << "Down" << std::endl;
-                while (block.moveDown(grid));
-                isHardDrop = true;
-                count --;
-            }
+    for (int count = 1; count * 1000 <= durationTime * MAX_AI_MOVEMENTS_PER_SECOND && !aiMovement.empty(); count++) {
+        const Movement &currentMovement = aiMovement.read();
+        if (currentMovement == Movement::Rotate) {
+            block.rotate(grid);
+        } else if (currentMovement == Movement::Left) {
+            block.moveLeft(grid);
+        } else if (currentMovement == Movement::Right) {
+            block.moveRight(grid);
+        } else if (currentMovement == Movement::Down) {
+            while (block.moveDown(grid));
+            isHardDrop = true;
         }
         aiLastMoveTime = currentTime;
     }
+
+//    while (isAiActive && durationTime > ai.limitation() && !aiMovement.empty()) {
+//        int count = 1;
+////        if (ai.limitation() == 0) count = std::numeric_limits<int>::max();
+////        else count = durationTime / ai.limitation();
+//        while(!aiMovement.empty() && count > 0) {
+//            count--;
+//            const Movement &currentMovement = aiMovement.read();
+//            if (currentMovement == Movement::Rotate) {
+////            std::cout << "Rotate" << std::endl;
+//                block.rotate(grid);
+//            } else if (currentMovement == Movement::Left) {
+////            std::cout << "Left" << std::endl;
+//                block.moveLeft(grid);
+//            } else if (currentMovement == Movement::Right) {
+////            std::cout << "Right" << std::endl;
+//                block.moveRight(grid);
+//            } else if (currentMovement == Movement::Down) {
+////            std::cout << "Down" << std::endl;
+//                while (block.moveDown(grid));
+//                isHardDrop = true;
+////                count --;
+//            }
+//        }
+
+//        aiLastMoveTime = currentTime;
+//    }
 
     if (isHardDrop) { while (block.moveDown(grid)); }
 
@@ -314,7 +333,6 @@ void Game::draw() {
 }
 
 void Game::run() {
-    //TODO:: add tick limitation
     auto lastLogicTime = std::chrono::high_resolution_clock::now();
     auto lastRenderTime = lastLogicTime;
     auto currentLogicTime = lastLogicTime;
@@ -331,13 +349,13 @@ void Game::run() {
         while (logicDuration >= 1000.0 / MAX_LOGIC_FRAMES) {
             tick();
             logicDuration -= 1000.0 / MAX_LOGIC_FRAMES;
-            Debug(logicElaps);
         }
         while (renderDuration >= 1000.0 / MAX_RENDER_FRAMES) {
             draw();
             renderDuration -= 1000.0 / MAX_RENDER_FRAMES;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        if (logicDuration > 1.0 && renderDuration > 1.0)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

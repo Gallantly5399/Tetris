@@ -77,8 +77,10 @@ private:
     sf::Clock aiClock;
     long long aiLastMoveTime = 0;
     std::thread aiThread;
-    const int MAX_LOGIC_FRAMES = 20;
-    const int MAX_RENDER_FRAMES = 60;
+    const uint32_t MAX_LOGIC_FRAMES = 20;
+    const uint32_t MAX_RENDER_FRAMES = 60;
+    const uint32_t MAX_AI_MOVEMENTS_PER_SECOND = 10;
+
     uint32_t logicFrameCount = 0;
     uint32_t renderFrameCount = 0;
 };

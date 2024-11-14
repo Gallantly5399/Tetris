@@ -158,7 +158,6 @@ public:
         for (int i = 0; i < newCandidates.size(); i++) {
             candidates.push_back(newCandidates[i]);
         }
-        //FIXME::
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
             return a.fitness > b.fitness;
         });
