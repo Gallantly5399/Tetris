@@ -93,7 +93,7 @@ public:
     void rotate();
     void rotateCounterClockwise();
 
-private:
+//private:
     //just rotate in the local coordinate
     std::vector<std::vector<int>> shape;
     BlockType type;

@@ -25,7 +25,7 @@ void Game::insertBlock() {
 }
 
 void Game::processEvents() {
-    sf::Event event;
+    sf::Event event{};
     sf::RenderWindow &window = ui.getWindow();
     while (window.pollEvent(event)) {
 //            std::cout << gravity.getFallTime() << std::endl;
@@ -81,9 +81,8 @@ void Game::processEvents() {
     }
 }
 
-#include <iostream>
-
 void Game::tick() {
+    logicFrameCount ++;
     isHardDrop = false;
     processEvents();
     if (!isRunning) return;
@@ -295,6 +294,7 @@ void Game::restart() {
 }
 
 void Game::draw() {
+    renderFrameCount ++;
     ui.clear();
     if (!shouldStop()) {
         ui.drawBlock(block, 200, 25);
@@ -314,9 +314,30 @@ void Game::draw() {
 }
 
 void Game::run() {
+    //TODO:: add tick limitation
+    auto lastLogicTime = std::chrono::high_resolution_clock::now();
+    auto lastRenderTime = lastLogicTime;
+    auto currentLogicTime = lastLogicTime;
+    auto currentRenderTime = lastLogicTime;
+    double logicDuration = 0, renderDuration = 0;
     while (!shouldClose()) {
-        tick();
-        draw();
+        currentLogicTime = std::chrono::high_resolution_clock::now();
+        currentRenderTime = currentLogicTime;
+        logicDuration += std::chrono::duration<double, std::milli>(currentLogicTime - lastLogicTime).count();
+        renderDuration += std::chrono::duration<double, std::milli>(currentRenderTime - lastRenderTime).count();
+        lastLogicTime = currentLogicTime;
+        lastRenderTime = currentRenderTime;
+
+        while (logicDuration >= 1000.0 / MAX_LOGIC_FRAMES) {
+            tick();
+            logicDuration -= 1000.0 / MAX_LOGIC_FRAMES;
+            Debug(logicElaps);
+        }
+        while (renderDuration >= 1000.0 / MAX_RENDER_FRAMES) {
+            draw();
+            renderDuration -= 1000.0 / MAX_RENDER_FRAMES;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 

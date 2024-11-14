@@ -56,7 +56,7 @@ public:
     static void computeFitnesses(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves) {
         for (int i = 0; i < candidates.size(); i++) {
             Candidate& candidate = candidates[i];
-            AI *ai = new AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight,
+            AI ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight,
                             candidate.bumpinessWeight);
             int totalScore = 0;
             for (int j = 0; j < numberOfGames; j++) {
@@ -81,7 +81,6 @@ public:
                 totalScore += score;
             }
             candidate.fitness = totalScore;
-            delete ai;
         }
 
     }

@@ -51,6 +51,7 @@ private:
     Gravity gravity;
     int score = 0;
     Block holdBlock = Block();
+    int currentLogicFrame = 0;
 
     //if now is available to hold
     bool isHold = false;
@@ -59,6 +60,8 @@ private:
     bool backToBack = false;
 
     AI ai;
+    std::mutex mutex;
+    std::condition_variable cv;
     int comboCount = 0;
     ScoreType lastScoreType = ScoreType::None;
     ScoreType addScore();
@@ -74,4 +77,8 @@ private:
     sf::Clock aiClock;
     long long aiLastMoveTime = 0;
     std::thread aiThread;
+    const int MAX_LOGIC_FRAMES = 20;
+    const int MAX_RENDER_FRAMES = 60;
+    uint32_t logicFrameCount = 0;
+    uint32_t renderFrameCount = 0;
 };

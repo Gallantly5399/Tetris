@@ -9,6 +9,8 @@
 #include <queue>
 #include <iostream>
 #include <thread>
+#include <condition_variable>
+#include <mutex>
 
 struct MovementData{
     std::vector<Movement> data;
@@ -57,7 +59,7 @@ public:
     }
     void best(MovementData& movements) {
         while(!isStop) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             if (blockQueue.empty()) continue;
             auto [workingPieces, grid] = blockQueue.front();
             blockQueue.pop();
@@ -125,19 +127,14 @@ private:
                 if (workingPieceIndex == (workingPieces.size() - 1)) {
                     score = -heightWeight * _grid.aggregateHeight() + linesWeight * _grid.lines() -
                             holesWeight * _grid.holes() - bumpinessWeight * _grid.bumpiness();
-//                    std::cout << "Rotation: " << rotation << "Count: " << count << ", score: " << score << std::endl;
                 } else {
                     score = best_(_grid, workingPieces, workingPieceIndex + 1).second;
                 }
 
-//                auto [startRow1, startColumn1] = _piece.getPosition();
-//                std::cout << "StartRow1:" << startRow1 << " StartColumn1:" << startColumn1 << std::endl;
                 if (score > bestScore) {
                     bestScore = score;
                     bestBlock = _piece;
                 }
-//                if (!_piece.isValid(startRow, startColumn + 1, grid)) break;
-//                _piece.setStartColumn(startColumn + 1);
                 count++;
             }while(_piece.moveRight(grid));
         }
