@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Game.h"
 
 //SFML coordinate system

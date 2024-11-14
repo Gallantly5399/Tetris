@@ -11,6 +11,7 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
+#include "Utility.h"
 
 struct MovementData{
     std::vector<Movement> data;
@@ -31,24 +32,12 @@ struct MovementData{
         readIndex = 0;
         writeIndex = 0;
     }
-    bool empty() const{
+    [[nodiscard]] bool empty() const{
         return readIndex == writeIndex;
     }
 };
 
-static void insertBlock(Grid& grid, const Block& block) {
-    const auto& shape = block.getShape();
-    const auto& color = block.getColor();
-    int startRow = block.getStartRow();
-    int startColumn = block.getStartColumn();
-    for (int column = 0; column < shape.size(); column ++) {
-        for (int row = 0; row < shape.size(); row ++) {
-            if (shape[column][row] == 1) {
-                grid.fill(startRow + row, startColumn + column, color);
-            }
-        }
-    }
-}
+
 class AI {
 public:
     AI(double heightWeight, double linesWeight, double holesWeight, double bumpinessWeight) {
@@ -86,17 +75,13 @@ public:
     void stop() {
         isStop = true;
     }
-    long long limitation() {
-        return movementLimit;
-    }
     void add(std::vector<Block> blocks, Grid grid) {
-        blockQueue.push({blocks, grid});
+        blockQueue.emplace(blocks, grid);
     }
 private:
     std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
     bool isStop = false;
     //millisecond time for per block
-    long long movementLimit = 0;
     double heightWeight;
     double linesWeight;
     double holesWeight;

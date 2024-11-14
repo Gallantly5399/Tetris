@@ -3,11 +3,8 @@
 //
 
 #include "Game.h"
-#ifndef NDEBUG
-#define Debug(x) (std::cerr << #x << ": " << (x) << std::endl)
-#else
-#define Debug(x)
-#endif
+#include <toml++/toml.hpp>
+
 
 void Game::insertBlock() {
     const auto &shape = block.getShape();
@@ -28,7 +25,6 @@ void Game::processEvents() {
     sf::Event event{};
     sf::RenderWindow &window = ui.getWindow();
     while (window.pollEvent(event)) {
-//            std::cout << gravity.getFallTime() << std::endl;
         if (event.type == sf::Event::Closed)
             window.close();
         else if (event.type == sf::Event::KeyPressed) {
@@ -119,33 +115,6 @@ void Game::tick() {
         }
         aiLastMoveTime = currentTime;
     }
-
-//    while (isAiActive && durationTime > ai.limitation() && !aiMovement.empty()) {
-//        int count = 1;
-////        if (ai.limitation() == 0) count = std::numeric_limits<int>::max();
-////        else count = durationTime / ai.limitation();
-//        while(!aiMovement.empty() && count > 0) {
-//            count--;
-//            const Movement &currentMovement = aiMovement.read();
-//            if (currentMovement == Movement::Rotate) {
-////            std::cout << "Rotate" << std::endl;
-//                block.rotate(grid);
-//            } else if (currentMovement == Movement::Left) {
-////            std::cout << "Left" << std::endl;
-//                block.moveLeft(grid);
-//            } else if (currentMovement == Movement::Right) {
-////            std::cout << "Right" << std::endl;
-//                block.moveRight(grid);
-//            } else if (currentMovement == Movement::Down) {
-////            std::cout << "Down" << std::endl;
-//                while (block.moveDown(grid));
-//                isHardDrop = true;
-////                count --;
-//            }
-//        }
-
-//        aiLastMoveTime = currentTime;
-//    }
 
     if (isHardDrop) { while (block.moveDown(grid)); }
 
@@ -279,8 +248,12 @@ Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
     aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     clock.restart();
-    aiMovement.data.resize(1000);
+    aiMovement.data.resize(100);
     aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
+
+    parseConfig();
+
+
 }
 
 void Game::stop() {
@@ -359,11 +332,8 @@ void Game::run() {
     }
 }
 
-void Game::close() {
-    ui.getWindow().close();
-}
 
-bool Game::isDifficultScore(const ScoreType &scoreType) const {
+bool Game::isDifficultScore(const ScoreType &scoreType) {
     if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle ||
         scoreType == ScoreType::TSpinMiniDouble ||
         scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble ||
@@ -395,29 +365,16 @@ int Game::scoreTypeToInt(ScoreType scoreType) {
     else return 0;
 }
 
-//std::queue<Movement> Game::simulateMovement(const Block &aiBlock) {
-//    std::queue<Movement> movements;
-//
-//    Block temBlock = this->block;
-//    while (temBlock.getRotation() != aiBlock.getRotation()) {
-//        movements.push(Movement::Rotate);
-//        temBlock.rotate(grid);
-//    }
-//    auto [aiRow, aiColumn] = aiBlock.getPosition();
-//    auto [blockRow, blockColumn] = temBlock.getPosition();
-//    if (aiColumn > blockColumn) {
-//        for (int i = 0; i < aiColumn - blockColumn; i++) movements.push(Movement::Right);
-//    } else if (aiColumn < blockColumn) {
-//        for (int i = 0; i < blockColumn - aiColumn; i++) movements.push(Movement::Left);
-//    }
-//
-//
-//    movements.push(Movement::Down);
-//    return movements;
-//}
-
 Game::~Game() {
     ai.stop();
     if (aiThread.joinable()) aiThread.join();
     ui.getWindow().close();
+}
+
+void Game::parseConfig() {
+    auto config = toml::parse_file((projectPath / "config.toml").c_str());
+    MAX_LOGIC_FRAMES = config["game"]["MAX_LOGIC_FRAMES"].value_or<uint32_t>(20);
+    MAX_RENDER_FRAMES = config["game"]["MAX_RENDER_FRAMES"].value_or<uint32_t>(60);
+
+    MAX_AI_MOVEMENTS_PER_SECOND = config["ai"]["MAX_AI_MOVEMENTS_PER_SECOND"].value_or<uint32_t>(100);
 }

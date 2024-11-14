@@ -12,6 +12,7 @@
 #include "Ai.h"
 #include "Generator.h"
 #include <thread>
+#include <filesystem>
 
 
 class Game {
@@ -28,8 +29,7 @@ public:
     bool shouldClose();
     ~Game();
     void run();
-    void close();
-    int scoreTypeToInt(ScoreType scoreType);
+    static int scoreTypeToInt(ScoreType scoreType);
 private:
     //column row
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
@@ -60,8 +60,6 @@ private:
     bool backToBack = false;
 
     AI ai;
-    std::mutex mutex;
-    std::condition_variable cv;
     int comboCount = 0;
     ScoreType lastScoreType = ScoreType::None;
     ScoreType addScore();
@@ -70,17 +68,19 @@ private:
     void draw();
     void insertBlock();
     void stop();
-    bool isDifficultScore(const ScoreType& scoreType) const;
-    std::queue<Movement> simulateMovement(const Block& aiBlock);
+    static bool isDifficultScore(const ScoreType& scoreType);
+    void parseConfig();
     MovementData aiMovement;
     bool firstBlock = false;
     sf::Clock aiClock;
     long long aiLastMoveTime = 0;
     std::thread aiThread;
-    const uint32_t MAX_LOGIC_FRAMES = 20;
-    const uint32_t MAX_RENDER_FRAMES = 60;
-    const uint32_t MAX_AI_MOVEMENTS_PER_SECOND = 10;
+    //TODO::read from config file
+    uint32_t MAX_LOGIC_FRAMES = 20;
+    uint32_t MAX_RENDER_FRAMES = 60;
+    uint32_t MAX_AI_MOVEMENTS_PER_SECOND = 10;
 
     uint32_t logicFrameCount = 0;
     uint32_t renderFrameCount = 0;
+    std::filesystem::path projectPath = FILE_LOCATION;
 };
