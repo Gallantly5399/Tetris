@@ -14,7 +14,6 @@
 #include <thread>
 #include <filesystem>
 
-
 class Game {
 public:
     //delete copy constructor and move constructor
@@ -41,8 +40,8 @@ private:
     double lockDelayTime = 0;
     double time = 0;
     bool isAiActive = false;
-
     bool isHardDrop = false;
+    std::thread aiThread;
     sf::Clock clock;
     Block block;
     Grid grid;
@@ -72,9 +71,8 @@ private:
     void parseConfig();
     MovementData aiMovement;
     bool firstBlock = false;
-    sf::Clock aiClock;
     long long aiLastMoveTime = 0;
-    std::thread aiThread;
+//    std::thread aiThread;
     //TODO::read from config file
     uint32_t MAX_LOGIC_FRAMES = 20;
     uint32_t MAX_RENDER_FRAMES = 60;

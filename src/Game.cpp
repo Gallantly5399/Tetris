@@ -93,11 +93,16 @@ void Game::tick() {
     while (transparentBlock.moveDown(grid));
     if (firstBlock && isAiActive) {
         firstBlock = false;
-        std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+        std::vector<Block> workingPieces{block};
+        for (const auto& i : generator.seeNextBlocks(4)) {
+            workingPieces.push_back(i);
+        }
         ai.add(workingPieces, grid);
         aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
     }
+
+
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     long long durationTime = currentTime - aiLastMoveTime;
@@ -132,7 +137,10 @@ void Game::tick() {
                         block = generator.nextBlock();
                         if (isAiActive) {
                             //TODO::AI
-                            std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+                            std::vector<Block> workingPieces{block};
+                            for (const auto& i : generator.seeNextBlocks(4)) {
+                                workingPieces.push_back(i);
+                            }
                             ai.add(workingPieces, grid);
                         };
                     }
@@ -155,7 +163,10 @@ void Game::tick() {
                 block = generator.nextBlock();
 
                 if (isAiActive) {
-                    std::vector<Block> workingPieces = {block, generator.seeNextBlocks(1)[0]};
+                    std::vector<Block> workingPieces{block};
+                    for (const auto& i : generator.seeNextBlocks(4)) {
+                        workingPieces.push_back(i);
+                    }
                     ai.add(workingPieces, grid);
                 }
             }
@@ -249,7 +260,13 @@ Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
             std::chrono::system_clock::now().time_since_epoch()).count();
     clock.restart();
     aiMovement.data.resize(100);
-    aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
+    //TODO::add thread pool
+//    pool.enqueue([&]{
+    aiThread = std::thread([&] {
+        ai.best(aiMovement);
+    });
+
+//    aiThread = std::thread(&AI::best, &ai, std::ref(aiMovement));
 
     parseConfig();
 
@@ -280,7 +297,6 @@ void Game::restart() {
     backToBack = false;
     comboCount = 0;
     clock.restart();
-    aiClock.restart();
     isHold = false;
     aiMovement.clear();
 }
@@ -334,6 +350,7 @@ void Game::run() {
 
 
 bool Game::isDifficultScore(const ScoreType &scoreType) {
+    //TODO::read from config file
     if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle ||
         scoreType == ScoreType::TSpinMiniDouble ||
         scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble ||
@@ -344,6 +361,7 @@ bool Game::isDifficultScore(const ScoreType &scoreType) {
 }
 
 int Game::scoreTypeToInt(ScoreType scoreType) {
+    //TODO::read from config file
     if (scoreType == ScoreType::None) return 0;
     else if (scoreType == ScoreType::Single) return 100;
     else if (scoreType == ScoreType::Double) return 300;

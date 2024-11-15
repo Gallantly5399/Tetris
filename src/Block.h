@@ -24,6 +24,7 @@ enum class BlockType{
     None = 7
 };
 
+//TODO::add leftrotate and rightrotate
 enum class Movement {
     Rotate,
     Left,
