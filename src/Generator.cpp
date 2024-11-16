@@ -5,33 +5,49 @@
 #include "Generator.h"
 
 Generator::Generator() {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    std::shuffle(nextBlocks.begin(), nextBlocks.begin() + 7, gen);
-    std::shuffle(nextBlocks.begin() + 7, nextBlocks.begin() + 14, gen);
+    gen = std::mt19937(std::random_device{}());
+    for (int i = 0; i < 20; i++) {
+        blockSets.emplace_back(gen);
+    }
 }
 
 Block Generator::nextBlock() {
-    if (index == 7) {
-        std::shuffle(nextBlocks.begin(), nextBlocks.begin() + 7, gen);
+    if (index % 7 == 0) {
+        blockSets.pop_front();
     }
-    if (index == nextBlocks.size()) {
-        index = 0;
-        std::shuffle(nextBlocks.begin() + 7, nextBlocks.begin() + 14, gen);
+    if (blockSets.empty()) {
+        blockSets.emplace_back(gen);
     }
-    return Block(static_cast<BlockType>(nextBlocks[index++ % 14]));
+    return Block{blockSets.front().blocks[index++ % 7]};
 }
 
-std::vector<Block> Generator::seeNextBlocks(int count) const{
-    std::vector<Block> blocks;
-    for (int i = 0; i < count; i++) {
-        blocks.push_back(Block(static_cast<BlockType>(nextBlocks[(index + i) % 14])));
+std::vector<Block> Generator::seeNextBlocks(int count) {
+    int virtualIndex = index;
+    int blockSetIndex = 0;
+    std::vector<Block> blocks(count);
+    for (auto &block: blocks) {
+        if (virtualIndex % 7 == 0) {
+            blockSetIndex++;
+            if (blockSetIndex == blockSets.size()) {
+                blockSets.emplace_back(gen);
+            }
+        }
+        block = Block{blockSets[blockSetIndex].blocks[virtualIndex++ % 7]};
     }
     return blocks;
 }
 
 void Generator::clear() {
     index = 0;
-    std::shuffle(nextBlocks.begin(), nextBlocks.begin() + 7, gen);
-    std::shuffle(nextBlocks.begin() + 7, nextBlocks.begin() + 14, gen);
+    blockSets.clear();
+    for (int i = 0; i < 20; i++) {
+        blockSets.emplace_back(gen);
+    }
+}
+
+Generator::BlockSet::BlockSet(std::mt19937 &gen) {
+    for (int i = 0; i < blocks.size(); i++) {
+        blocks[i] = {static_cast<BlockType>(i)};
+    }
+    std::shuffle(blocks.begin(), blocks.end(), gen);
 }

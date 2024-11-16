@@ -3,29 +3,10 @@
 //
 
 #pragma once
+#include "Utility.h"
 #include <SFML/Graphics.hpp>
 #include "Grid.h"
 #include "Block.h"
-enum class ScoreType {
-    None = 0,
-    Single,
-    Double,
-    Triple,
-    Tetris,
-    Combo,
-    TSpinMiniNoLines,
-    TSpinMiniSingle,
-    TSpinMiniDouble,
-    TSpinNoLines,
-    TSpinSingle,
-    TSpinDouble,
-    TSpinTriple,
-    SinglePerfectClear,
-    DoublePerfectClear,
-    TriplePerfectClear,
-    TetrisPerfectClear,
-    BackToBackTetrisPerfectClear,
-};
 class UI {
 public:
     explicit UI();

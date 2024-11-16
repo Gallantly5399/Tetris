@@ -56,19 +56,31 @@ public:
     //judge if block has exceeded the boundary
     bool exceed();
     void clear();
+    bool empty() const;
     //insert the block into the grid
     void insertBlock(const std::vector<std::vector<int>> &shape, sf::Color color, int startRow, int startColumn);
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const;
     int getWidth() const;
     int getHeight() const;
     int clearLines();
+    //the number of the lines which could be cleared in the grid
     int lines() const;
+    //the sum of the difference between the height of each column and the minimum height
     int bumpiness() const;
+    //the number of the empty blocks which have at least one block above them
     int holes() const;
+
+    //the sum of the continuous empty lines
+    int sumOfContinuousEmptyLines() const;
+
     int aggregateHeight() const;
+
+    bool backToBack = false;
+    uint32_t comboCount = 0;
 private:
     int columnSize, rowSize;
     std::vector<std::vector<int>> grid;
     std::vector<std::vector<sf::Color>> colors;
+
 
 };

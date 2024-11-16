@@ -5,14 +5,22 @@
 #pragma once
 #include <random>
 #include "Block.h"
+#include <queue>
+#include <array>
+
 class Generator {
 public:
     Generator();
-    Block nextBlock();
-    std::vector<Block> seeNextBlocks(int count) const;
+    [[nodiscard]] Block nextBlock();
+    [[nodiscard]] std::vector<Block> seeNextBlocks(int count);
     void clear();
 private:
+    struct BlockSet {
+        std::array<BlockType, 7> blocks;
+        BlockSet() = delete;
+        BlockSet(std::mt19937& gen);
+    };
     std::mt19937 gen;
-    int index = 0;
-    std::array<int, 14> nextBlocks = {0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6};
+    uint32_t index = 0;
+    std::deque<BlockSet> blockSets;
 };

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#include "Utility.h"
 #include "Grid.h"
 #include <random>
 #include "Block.h"
@@ -12,8 +12,8 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
-#include "Utility.h"
 
+//TODO::Pack the movement data
 struct MovementData {
     std::vector<Movement> data;
     int readIndex = 0;
@@ -45,11 +45,12 @@ struct MovementData {
 
 class AI {
 public:
-    AI(double heightWeight, double linesWeight, double holesWeight, double bumpinessWeight) {
+    AI(double heightWeight, double scoreWeight, double holesWeight, double bumpinessWeight, double emptyLineWeight) {
         this->heightWeight = heightWeight;
-        this->linesWeight = linesWeight;
+        this->scoreWeight = scoreWeight;
         this->holesWeight = holesWeight;
         this->bumpinessWeight = bumpinessWeight;
+        this->emptyLineWeight = emptyLineWeight;
     }
 
     void best(MovementData &movements) {
@@ -66,10 +67,21 @@ public:
             }
             int rotate_count = 0;
             while (temBlock.getRotation() != bestBlock.getRotation()) {
-                movements.write(Movement::Rotate);
+//                movements.write(Movement::Rotate);
                 rotate_count ++;
                 temBlock.rotate(grid);
             }
+            Movement movement;
+            if (rotate_count <= 2) {
+                movement = Movement::Rotate;
+            } else {
+                rotate_count = 4 - rotate_count;
+                movement = Movement::RotateCounterClockwise;
+            }
+            for (int i = 0;i < rotate_count; i++) {
+                movements.write(movement);
+            }
+
             auto [aiRow, aiColumn] = bestBlock.getPosition();
             auto [blockRow, blockColumn] = temBlock.getPosition();
             if (aiColumn > blockColumn) {
@@ -88,35 +100,13 @@ public:
     void add(std::vector<Block> blocks, Grid grid) {
         blockQueue.emplace(blocks, grid);
     }
-
-private:
-    std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
-    bool isStop = false;
-    //millisecond time for per block
-    double heightWeight;
-    double linesWeight;
-    double holesWeight;
-    double bumpinessWeight;
-
-    struct Candidate {
-        double score;
-        std::vector<Block> blocks;
-        Grid grid;
-
-        Candidate(double _score, const Block &_block, const Grid &_grid) : score(_score), grid(_grid) {
-            blocks.push_back(_block);
-        }
-
-        Candidate(double _score, const std::vector<Block> &_blocks, const Grid &_grid) : score(_score), blocks(_blocks),
-                                                                                         grid(_grid) {}
-    };
-
     std::tuple<Block, double, Grid> best_(const Grid &grid, const std::vector<Block> &workingPieces) {
         //TODO:: beam search instead of dfs
         std::vector<Candidate> candidates, totalCandidates;
         candidates.emplace_back(std::numeric_limits<double>::lowest(), Block{}, grid);
-        for (int workingIndex = 0; workingIndex < 5; workingIndex++) {
+        for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
             for (auto &[_, blocks, workingGrid]: candidates) {
+                //TODO::add soft drop
                 for (int rotation = 0; rotation < 4; rotation++) {
                     Block _piece = workingPieces[workingIndex];
                     for (int i = 0; i < rotation; i++) {
@@ -130,10 +120,13 @@ private:
                         while (_pieceSet.moveDown(workingGrid));
 
                         Grid _grid = workingGrid;
-                        insertBlock(_grid, _pieceSet);
+                        utility::insertBlock(_grid, _pieceSet);
+
                         double currentScore =
-                                -heightWeight * _grid.aggregateHeight() + linesWeight * _grid.lines() -
-                                holesWeight * _grid.holes() - bumpinessWeight * _grid.bumpiness();
+                                -heightWeight * _grid.aggregateHeight() - holesWeight * _grid.holes()
+                                - bumpinessWeight * _grid.bumpiness() + emptyLineWeight * _grid.sumOfContinuousEmptyLines();
+                        currentScore += scoreWeight * utility::scoreForAI(_grid, _pieceSet);
+                        if (_grid.exceed()) currentScore = std::numeric_limits<double>::lowest();
                         auto temBlocks = blocks;
                         temBlocks.push_back(_pieceSet);
                         totalCandidates.emplace_back(currentScore, temBlocks, _grid);
@@ -151,4 +144,28 @@ private:
         }
         return {candidates[0].blocks[1], candidates[0].score, candidates[0].grid};
     }
+private:
+    std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
+    bool isStop = false;
+    //millisecond time for per block
+    double heightWeight;
+    double scoreWeight;
+    double holesWeight;
+    double bumpinessWeight;
+    double emptyLineWeight;
+
+    struct Candidate {
+        double score;
+        std::vector<Block> blocks;
+        Grid grid;
+
+        Candidate(double _score, const Block &_block, const Grid &_grid) : score(_score), grid(_grid) {
+            blocks.push_back(_block);
+        }
+
+        Candidate(double _score, const std::vector<Block> &_blocks, const Grid &_grid) : score(_score), blocks(_blocks),
+                                                                                         grid(_grid) {}
+    };
+
+
 };

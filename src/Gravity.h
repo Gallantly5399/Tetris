@@ -29,6 +29,7 @@ public:
     int getLevel() const;
     void setNoGravity();
     void addLines(int lines);
+    bool softDrop() const;
 private:
     int level = 1;
     double fallTime = 0;

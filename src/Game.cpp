@@ -5,6 +5,7 @@
 #include "Game.h"
 #include <toml++/toml.hpp>
 
+const int AI_SEE_NEXT = 9;
 
 void Game::insertBlock() {
     const auto &shape = block.getShape();
@@ -21,6 +22,8 @@ void Game::insertBlock() {
 
 }
 
+//TODO::add smooth movement
+//FIXME::soft drop error
 void Game::processEvents() {
     sf::Event event{};
     sf::RenderWindow &window = ui.getWindow();
@@ -36,14 +39,16 @@ void Game::processEvents() {
                 window.close();
             }
             if (isAiActive) return;
-            if (event.key.scancode == sf::Keyboard::Scan::W) {
+            if (event.key.scancode == sf::Keyboard::Scan::W) { //right rotate
                 bool state = block.rotate(grid);
                 if (isTouchedGround && state) movement++, lockDelayTime = 0;
                 //rotate the block
             } else if (event.key.scancode == sf::Keyboard::Scan::A) {
+//                HORIZONTAL_MOVEMENT = -1;
                 bool state = block.moveLeft(grid);
                 if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::D) {
+//                HORIZONTAL_MOVEMENT = 1;
                 bool state = block.moveRight(grid);
                 if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::S) {
@@ -62,6 +67,10 @@ void Game::processEvents() {
             if (event.key.scancode == sf::Keyboard::Scan::S) {
                 gravity.unsetSoftDrop();
             }
+            if (event.key.scancode == sf::Keyboard::Scan::A ||
+                event.key.scancode == sf::Keyboard::Scan::D) {
+                HORIZONTAL_MOVEMENT = 0;
+            }
         } else if (event.type == sf::Event::MouseButtonPressed) {
             if (isAiActive) return;
             if (event.mouseButton.button == sf::Mouse::Left) {
@@ -75,18 +84,35 @@ void Game::processEvents() {
             }
         }
     }
+//    if (HORIZONTAL_MOVEMENT != 0) movementCount ++;
+//    else movementCount = 0;
+//    if (movementCount % MOVEMENT_SENSITIVITY == 0) {
+//        if (HORIZONTAL_MOVEMENT == 1) {
+//            bool state = block.moveRight(grid);
+//            if (isTouchedGround && state) movement++, lockDelayTime = 0;
+//            std::cerr << 1 << '\n';
+//        } else if (HORIZONTAL_MOVEMENT == -1) {
+//            bool state = block.moveLeft(grid);
+//            if (isTouchedGround && state) movement++, lockDelayTime = 0;
+//            std::cerr << 2 << '\n';
+//        }
+//    }
 }
 
 void Game::tick() {
-    logicFrameCount ++;
+    logicFrameCount++;
     isHardDrop = false;
     processEvents();
     if (!isRunning) return;
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
-    if (time >= gravity.getFallTime()) {
+    while (time >= gravity.getFallTime()) {
         block.moveDown(grid);
-        time -= gravity.getFallTime();
+        if (gravity.softDrop()) {
+            time = 0;
+        } else {
+            time -= gravity.getFallTime();
+        }
     }
 
     Block transparentBlock = block.getTransparentBlock();
@@ -94,7 +120,7 @@ void Game::tick() {
     if (firstBlock && isAiActive) {
         firstBlock = false;
         std::vector<Block> workingPieces{block};
-        for (const auto& i : generator.seeNextBlocks(4)) {
+        for (const auto &i: generator.seeNextBlocks(AI_SEE_NEXT)) {
             workingPieces.push_back(i);
         }
         ai.add(workingPieces, grid);
@@ -103,6 +129,7 @@ void Game::tick() {
     }
 
 
+    //TODO::integrate AI movements into Events
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     long long durationTime = currentTime - aiLastMoveTime;
@@ -110,6 +137,8 @@ void Game::tick() {
         const Movement &currentMovement = aiMovement.read();
         if (currentMovement == Movement::Rotate) {
             block.rotate(grid);
+        } else if (currentMovement == Movement::RotateCounterClockwise) {
+            block.rotateCounterClockwise(grid);
         } else if (currentMovement == Movement::Left) {
             block.moveLeft(grid);
         } else if (currentMovement == Movement::Right) {
@@ -138,7 +167,7 @@ void Game::tick() {
                         if (isAiActive) {
                             //TODO::AI
                             std::vector<Block> workingPieces{block};
-                            for (const auto& i : generator.seeNextBlocks(4)) {
+                            for (const auto &i: generator.seeNextBlocks(AI_SEE_NEXT)) {
                                 workingPieces.push_back(i);
                             }
                             ai.add(workingPieces, grid);
@@ -164,7 +193,7 @@ void Game::tick() {
 
                 if (isAiActive) {
                     std::vector<Block> workingPieces{block};
-                    for (const auto& i : generator.seeNextBlocks(4)) {
+                    for (const auto &i: generator.seeNextBlocks(AI_SEE_NEXT)) {
                         workingPieces.push_back(i);
                     }
                     ai.add(workingPieces, grid);
@@ -201,8 +230,19 @@ ScoreType Game::addScore() {
     Grid tempGrid = grid;
     int lines = tempGrid.clearLines();
     ScoreType scoreType = ScoreType::None;
-    //T-spin
-    if (TSpin()) {
+    //TODO::add perfect clear
+    if (tempGrid.empty()) { //perfect clear
+        if (lines == 4 && tempGrid.lines() == 0) {
+            if (backToBack) scoreType = ScoreType::BackToBackTetrisPerfectClear;
+            else scoreType = ScoreType::TetrisPerfectClear;
+        } else if (lines == 3 && tempGrid.lines() == 0) {
+            scoreType = ScoreType::TriplePerfectClear;
+        } else if (lines == 2 && tempGrid.lines() == 0) {
+            scoreType = ScoreType::DoublePerfectClear;
+        } else if (lines == 1 && tempGrid.lines() == 0) {
+            scoreType = ScoreType::SinglePerfectClear;
+        }
+    } else if (TSpin()) { //T-spin
         //T-spin mini
         if (isSrs || block.checkMiniTSpin(grid)) {
             if (lines == 0) scoreType = ScoreType::TSpinMiniNoLines;
@@ -223,7 +263,7 @@ ScoreType Game::addScore() {
         else if (lines == 4) scoreType = ScoreType::Tetris;
     }
     if (isDifficultScore(scoreType)) {
-        if (backToBack) score += 1.5 * scoreTypeToInt(scoreType);
+        if (backToBack) score += 3 * scoreTypeToInt(scoreType) / 2;
         else score += scoreTypeToInt(scoreType);
         backToBack = true;
         comboCount++;
@@ -254,7 +294,7 @@ bool Game::TSpin() const {
 }
 
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
-               ai(0.42863, 0.46455, 0.744134, 0.216181) {
+               ai(1.0, 0.36303, 0.543833, 0.177715, 0.161) {
     block = generator.nextBlock();
     aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
@@ -302,7 +342,7 @@ void Game::restart() {
 }
 
 void Game::draw() {
-    renderFrameCount ++;
+    renderFrameCount++;
     ui.clear();
     if (!shouldStop()) {
         ui.drawBlock(block, 200, 25);
@@ -354,7 +394,9 @@ bool Game::isDifficultScore(const ScoreType &scoreType) {
     if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle ||
         scoreType == ScoreType::TSpinMiniDouble ||
         scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble ||
-        scoreType == ScoreType::TSpinTriple) {
+        scoreType == ScoreType::TSpinTriple || scoreType == ScoreType::BackToBackTetrisPerfectClear ||
+        scoreType == ScoreType::DoublePerfectClear || scoreType == ScoreType::TriplePerfectClear ||
+        scoreType == ScoreType::TetrisPerfectClear || scoreType == ScoreType::SinglePerfectClear) {
         return true;
     }
     return false;

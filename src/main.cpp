@@ -15,7 +15,10 @@
 // |
 // |
 // -----------x
+#include "Tuner.h"
 int main() {
+//    Tuner tuner{};
+//    tuner.run();
     Game game{};
     while(!game.shouldClose()) {
         game.run();

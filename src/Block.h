@@ -29,7 +29,8 @@ enum class Movement {
     Rotate,
     Left,
     Right,
-    Down
+    Down,
+    RotateCounterClockwise,
 };
 // local coordinate
 // for example, the shape of I block is
@@ -53,7 +54,7 @@ public:
     Block();
     bool checkMiniTSpin(const Grid& grid) const;
     //rotate if valid
-    bool rotate(const Grid& grid);
+    bool rotate(const Grid& grid);//right rotate
     bool moveLeft(const Grid& grid);
     bool moveRight(const Grid& grid);
     bool moveDown(const Grid& grid);
@@ -91,7 +92,7 @@ public:
     Movement getLastMovement() const;
     bool getSrs() const;
     int getRotation() const;
-    void rotate();
+    void rotate();//rightRotate
     void rotateCounterClockwise();
 
 //private:

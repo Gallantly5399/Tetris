@@ -13,7 +13,8 @@
 #include "Generator.h"
 #include <thread>
 #include <filesystem>
-
+//FIXME::AI repress error for the first block
+//FIXME::Gravity error
 class Game {
 public:
     //delete copy constructor and move constructor
@@ -34,7 +35,7 @@ private:
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
     void processEvents();
     bool isTouchedGround = false;
-    int movement = 0;
+    uint32_t movement = 0;
     bool isRunning = true;
     bool isLockDelay = true;
     double lockDelayTime = 0;
@@ -77,7 +78,9 @@ private:
     uint32_t MAX_LOGIC_FRAMES = 20;
     uint32_t MAX_RENDER_FRAMES = 60;
     uint32_t MAX_AI_MOVEMENTS_PER_SECOND = 10;
-
+    uint32_t HORIZONTAL_MOVEMENT = 0;
+    uint32_t MOVEMENT_SENSITIVITY = 2;
+    uint32_t movementCount = 0;
     uint32_t logicFrameCount = 0;
     uint32_t renderFrameCount = 0;
     std::filesystem::path projectPath = FILE_LOCATION;
