@@ -76,7 +76,9 @@ public:
     int aggregateHeight() const;
 
     bool backToBack = false;
-    uint32_t comboCount = 0;
+    bool holdable = true;
+
+    int comboCount = 0;
 private:
     int columnSize, rowSize;
     std::vector<std::vector<int>> grid;

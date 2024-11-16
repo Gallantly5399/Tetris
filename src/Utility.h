@@ -130,4 +130,13 @@ namespace utility {
     uint32_t getScore(Grid &grid, const Block &block);
     int scoreForAI(Grid &grid, const Block &block);
     ScoreType getScoreType(const Grid &grid, const Block &block);
+    bool checkMiniTSpin(const Grid& grid, const Block& block);
+    bool rotate(const Grid& grid, Block& block);//right rotate
+    bool moveLeft(const Grid& grid, Block& block);
+    bool moveRight(const Grid& grid, Block& block);
+    bool moveDown(const Grid& grid, Block& block);
+    bool isValid(int startRow_, int startColumn_, const Grid& grid, const Block& block);
+    bool valid(const Grid& grid, const Block& block);
+    bool touch(const Grid& grid, const Block& block);
+    bool rotateCounterClockwise(const Grid& grid, Block& block);
 }

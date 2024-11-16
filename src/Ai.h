@@ -69,7 +69,7 @@ public:
             while (temBlock.getRotation() != bestBlock.getRotation()) {
 //                movements.write(Movement::Rotate);
                 rotate_count ++;
-                temBlock.rotate(grid);
+                utility::rotate(grid, temBlock);
             }
             Movement movement;
             if (rotate_count <= 2) {
@@ -107,17 +107,18 @@ public:
         for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
             for (auto &[_, blocks, workingGrid]: candidates) {
                 //TODO::add soft drop
+                //TODO::add hold 
                 for (int rotation = 0; rotation < 4; rotation++) {
                     Block _piece = workingPieces[workingIndex];
                     for (int i = 0; i < rotation; i++) {
-                        _piece.rotate(workingGrid);
+                        utility::rotate(workingGrid, _piece);
                     }
 
-                    while (_piece.moveLeft(workingGrid));
+                    while (utility::moveLeft(workingGrid, _piece));
                     do {
                         if (isStop) return {candidates[0].blocks[1], candidates[0].score, candidates[0].grid};;
                         Block _pieceSet = _piece;
-                        while (_pieceSet.moveDown(workingGrid));
+                        while (utility::moveDown(workingGrid, _pieceSet));
 
                         Grid _grid = workingGrid;
                         utility::insertBlock(_grid, _pieceSet);
@@ -130,7 +131,7 @@ public:
                         auto temBlocks = blocks;
                         temBlocks.push_back(_pieceSet);
                         totalCandidates.emplace_back(currentScore, temBlocks, _grid);
-                    } while (_piece.moveRight(workingGrid));
+                    } while (utility::moveRight(workingGrid, _piece));
                 }
             }
             std::sort(totalCandidates.begin(), totalCandidates.end(), [](const Candidate &a, const Candidate &b) {

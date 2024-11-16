@@ -212,9 +212,9 @@ int Grid::sumOfContinuousEmptyLines() const {
         ans = std::max(ans, sum);
         preSum = sum;
     }
-    if (ans > 1) ans = 1 - ans;
+    if (ans > 1) ans = 0;
     if (uncontinuousEmptyLines >= 2) {
-        return -(uncontinuousEmptyLines - 1);
+        return 0;
     }
     return ans;
 }

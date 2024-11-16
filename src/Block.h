@@ -24,7 +24,6 @@ enum class BlockType{
     None = 7
 };
 
-//TODO::add leftrotate and rightrotate
 enum class Movement {
     Rotate,
     Left,
@@ -52,12 +51,7 @@ public:
 
     Block(BlockType type);
     Block();
-    bool checkMiniTSpin(const Grid& grid) const;
     //rotate if valid
-    bool rotate(const Grid& grid);//right rotate
-    bool moveLeft(const Grid& grid);
-    bool moveRight(const Grid& grid);
-    bool moveDown(const Grid& grid);
     BlockPosition getPosition() const;
     void setStartRow(int row) {
         startRow = row;
@@ -79,16 +73,11 @@ public:
     Block& operator=(Block&& block) noexcept;
     //return shape
     const std::vector<std::vector<int>>& getShape() const;
-
     sf::Color getColor() const;
-    bool touch(const Grid& grid) const;
-    bool rotateCounterClockwise(const Grid& grid);
     std::pair<int, int> getScreenPosition(int row, int column, int blockWidth, int stripeWidth, int screenWidth, int screenHeight, int startPosX, int startPosY, bool reverseY = true, bool startFromLeftTop = true) const;
     int getStartRow() const;
     Block getTransparentBlock() const;
     int getStartColumn() const;
-    bool isValid(int startRow_, int startColumn_, const Grid& grid) const;
-    bool valid(const Grid& grid) const;
     Movement getLastMovement() const;
     bool getSrs() const;
     int getRotation() const;

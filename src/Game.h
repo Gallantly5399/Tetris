@@ -29,7 +29,6 @@ public:
     bool shouldClose();
     ~Game();
     void run();
-    static int scoreTypeToInt(ScoreType scoreType);
 private:
     //column row
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
