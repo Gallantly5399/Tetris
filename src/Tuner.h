@@ -8,6 +8,7 @@
 #include <cmath>
 #include <algorithm>
 #include "Generator.h"
+#include <toml++/toml.hpp>
 #include "Ai.h"
 
 //TODO::modify linesWeight to scoreWeight
@@ -51,6 +52,9 @@ public:
     Tuner() {
         std::random_device rd;
         gen = std::mt19937(rd());
+        const std::filesystem::path projectPath(FILE_LOCATION);
+        auto config = toml::parse_file((projectPath / "config.toml").c_str());
+        MAX_THREAD = config["tuner"]["MAX_THREAD"].value_or(1);
     }
 
     static void normalize(Candidate &candidate) {
@@ -91,137 +95,30 @@ public:
 
     //TODO::add log file
     void computeFitnesses(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves) {
-        uint32_t totalThreads = 8;
-        std::vector<std::thread> threads(totalThreads - 1);
-        int threadTask = candidates.size() / totalThreads;
-        for (int i = 0; i < threads.size(); i++) {
-            threads[i] = std::thread([i, totalThreads, &candidates, numberOfGames, maxNumberOfMoves, this] {
-                for (int j = i; j < candidates.size(); j += totalThreads) {
-                    this->threadRun(candidates, numberOfGames, maxNumberOfMoves, j);
-                }
-            });
-        }
-        for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
-            threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
-        }
-        for (auto &thread: threads) {
-            thread.join();
+        if (MAX_THREAD == 1) {
+            for (int i = 0; i < candidates.size(); i++) {
+                threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
+            }
+        } else {
+            uint32_t totalThreads = MAX_THREAD;
+            std::vector<std::thread> threads(totalThreads - 1);
+            int threadTask = candidates.size() / totalThreads;
+            for (int i = 0; i < threads.size(); i++) {
+                threads[i] = std::thread([i, totalThreads, &candidates, numberOfGames, maxNumberOfMoves, this] {
+                    for (int j = i; j < candidates.size(); j += totalThreads) {
+                        this->threadRun(candidates, numberOfGames, maxNumberOfMoves, j);
+                    }
+                });
+            }
+            for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
+                threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
+            }
+            for (auto &thread: threads) {
+                thread.join();
+            }
         }
     }
 
-//    void runForPreview() {
-//        //TODO:: add concurrency
-//        std::vector<Candidate> candidates;
-//        // Initial population generation
-//        for (int i = 0; i < 100; i++) {
-//            candidates.emplace_back(generateRandomCandidate());
-//        }
-//        std::cout << "Computing fitnesses of initial candidates.\n";
-//        //timer
-//        int numberOfGames = 1;
-//        int maxNumberOfMoves = 400;
-//        for (int i = 0; i < candidates.size(); i++) {
-//            Candidate &candidate = candidates[i];
-//            AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
-//                       candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
-//                       candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
-//                       candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight);
-//
-//            uint64_t totalScore = 0;
-//            int totalMovement = 0;
-//            for (int j = 0; j < numberOfGames; j++) {
-//                Grid grid(10, 22);
-//                Generator rpg{};
-//
-//                uint64_t score = 0;
-//                int numberOfMoves = 0;
-//                while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
-//                    Block workingPiece = rpg.nextBlock();
-//                    std::vector<Block> workingPieces = {workingPiece};
-//                    for (const auto &piece: rpg.seeNextBlocks(9)) workingPieces.push_back(piece);
-//                    auto [_nouse, movements, _grid_nouse_1, bestBlock_nouse] = ai.best_(grid, workingPieces);
-//                    //TODO::move
-//                    draw(grid, workingPiece, rpg);
-//                    for (auto movement: movements) {
-//                        std::cerr << movement << ' ';
-//                    }
-//                    std::cout << '\n';
-//                    for (auto movement: movements) {
-//                        if (movement == Movement::Hold) {
-//                            if (movements.size() != 1) {
-//                                //TODO::Log
-//                                std::cerr << "Hold is not the only movement\n";
-//                            }
-//                            grid.hold(workingPiece);
-//                            if (workingPiece.empty()) continue;
-//                            auto [_score_nouse, secondMovements, _grid_nouse_2, _bsetb] = ai.best_(grid, workingPieces);
-//                            for (auto secondMovement: secondMovements) {
-//                                if (secondMovement == Movement::Hold) { //TODO::Log
-//                                    std::cerr << "Hold is not the only movement\n";
-//                                }
-//                                if (!utility::move(grid, workingPiece, secondMovement)) {
-//                                    std::cerr << "Invalid movement1\n";
-//                                    draw(grid, workingPiece, rpg);
-//                                }
-//                            }
-//                        } else {
-//                            if (!utility::move(grid, workingPiece, movement)) {
-//                                std::cerr << "Invalid movement2;" << movement << ", ";
-//                                draw(grid, workingPiece, rpg);
-//                                exit(-1);
-//                            }
-//                        }
-//                    }
-//                    if (!workingPiece.empty()) {
-//                        utility::insertBlock(grid, workingPiece);
-//                        score += utility::getScore(grid, workingPiece);
-//                    }
-//                }
-//                totalMovement += numberOfMoves;
-//                totalScore += score;
-//            }
-//            std::cerr << "totalMovement:" << totalMovement << '\n';
-//            candidate.fitness = totalScore;
-//        }
-//        std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
-//            return a.fitness > b.fitness;
-//        });
-
-//        int count = 0;
-//        for (int _ = 0; _ < 10000; _++) {
-//            std::vector<Candidate> newCandidates;
-//            for (int i = 0; i < 30; i++) { // 30% of population
-//                auto pair = tournamentSelectPair(candidates, 10); // 10% of population
-//                Candidate candidate = crossOver(pair.first, pair.second);
-//                if (randomInteger(1, 100) <= 5) {
-//                    mutate(candidate);
-////                    output(candidate);
-//                }
-//                normalize(candidate);
-//                newCandidates.push_back(candidate);
-//            }
-//            std::cout << "Computing fitnesses of new candidates. (" + std::to_string(count) + ")\n";
-//            computeFitnesses(newCandidates, 10, 300);
-//            std::cout
-//                    << "Replacing the least 30% of the population with the new candidates. (" + std::to_string(count) +
-//                       ")\n";
-//            deleteNLastReplacement(candidates, newCandidates);
-//            int totalFitness = 0;
-//            for (int i = 0; i < candidates.size(); i++) {
-//                totalFitness += candidates[i].fitness;
-//            }
-//            if (totalFitness > 0) {
-//                std::cout << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
-//                std::cout << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
-//                std::cout << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
-//                          "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
-//                          << candidates[0].holesWeight << ',' <<
-//                          "scoreWeight:" << candidates[0].scoreWeight <<
-//                          ",emptyLinesWeight:" << candidates[0].emptyLinesWeight << "(" << count << ")\n";
-//            }
-//            count++;
-//        }
-//    }
 
     std::pair<Candidate, Candidate> tournamentSelectPair(const std::vector<Candidate> &candidates, int ways) {
         std::vector<int> indices;
@@ -432,46 +329,8 @@ public:
     };
 
 private:
-    UI ui{};
-
-    void processKey() {
-        sf::Event event;
-        while (ui.getWindow().pollEvent(event)) {
-            // "close requested" event: we close the window
-            if (event.type == sf::Event::Closed)
-                ui.getWindow().close();
-        }
-    }
-
-    void draw(const Grid &grid, const Block &block, Generator &generator) {
-        //render for 5 seconds
-        auto start = std::chrono::high_resolution_clock::now();
-        while (ui.getWindow().isOpen()) {
-            auto end = std::chrono::high_resolution_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() > 2) {
-                break;
-            }
-            processKey();
-            ui.clear();
-            // check all the window's events that were triggered since the last iteration of the loop
-
-            ui.drawBlock(block, 200, 25);
-            Block transparentBlock = block.getTransparentBlock();
-            while (utility::moveDown(grid, transparentBlock));
-            ui.drawBlock(transparentBlock, 200, 25);
-//        ui.drawScore(score);
-            ui.drawGrid(grid);
-            ui.drawHoldBlock(grid.holdBlock);
-            ui.drawNextBlocks(generator.seeNextBlocks(5));
-//        ui.drawScoreType(lastScoreType, comboCount, backToBack);
-            ui.drawBackground();
-            ui.display();
-        }
-    }
-
-//
     std::mt19937 gen;
-
+    uint32_t MAX_THREAD = 1;
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
