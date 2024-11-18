@@ -49,12 +49,7 @@ private:
     Generator generator;
     Gravity gravity;
     int score = 0;
-    Block holdBlock = Block();
     int currentLogicFrame = 0;
-
-    //if now is available to hold
-    bool isHold = false;
-
     //1.5 times for difficult score
     bool backToBack = false;
 
@@ -69,6 +64,7 @@ private:
     void stop();
     static bool isDifficultScore(const ScoreType& scoreType);
     void parseConfig();
+    void sendBlocks();
     MovementData aiMovement;
     bool firstBlock = false;
     long long aiLastMoveTime = 0;

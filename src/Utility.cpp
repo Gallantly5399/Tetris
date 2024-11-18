@@ -5,44 +5,50 @@
 #include "Utility.h"
 #include <iostream>
 #include <cassert>
-const static std::array<std::array<std::array<int,2>, 5>, 4> RotationOffsetI {{
+
+const static std::array<std::array<std::array<int, 2>, 5>, 4> RotationOffsetI{{
                                                                                       {{
-                                                                                               {0, 0}, {-1, 0}, {2, 0}, {-1, 0}, {2, 0}
+                                                                                               {0, 0}, {-1, 0}, {2, 0},
+                                                                                               {-1, 0}, {2, 0}
                                                                                        }},
                                                                                       {{
-                                                                                               {-1, 0}, {0, 0}, {0, 0}, {0, 1}, {0, 2}
+                                                                                               {-1, 0}, {0, 0}, {0, 0},
+                                                                                               {0, 1}, {0, 2}
                                                                                        }},
                                                                                       {{
-                                                                                               {-1, 1}, {1, 1}, {-2, 1}, {1, 0}, {-2, 0}
+                                                                                               {-1, 1}, {1, 1}, {-2, 1},
+                                                                                               {1, 0}, {-2, 0}
                                                                                        }},
                                                                                       {{
-                                                                                               {0, 1}, {0, 1}, {0, 1}, {0, -1}, {0, 2}
+                                                                                               {0, 1}, {0, 1}, {0, 1},
+                                                                                               {0, -1}, {0, 2}
                                                                                        }}
 
                                                                               }};
 
-const static std::array<std::array<std::array<int, 2>, 1>, 4> RotationOffsetO {{
-                                                                                       {{0, 0}},
-                                                                                       {{0, -1}},
-                                                                                       {{-1, -1}},
-                                                                                       {{-1, 0}}
-                                                                               }};
+const static std::array<std::array<std::array<int, 2>, 1>, 4> RotationOffsetO{{
+                                                                                      {{0, 0}},
+                                                                                      {{0, -1}},
+                                                                                      {{-1, -1}},
+                                                                                      {{-1, 0}}
+                                                                              }};
 
-const static std::array<std::array<std::array<int,2>, 5>, 4> RotationOffsetJ {
+const static std::array<std::array<std::array<int, 2>, 5>, 4> RotationOffsetJ{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 1, 0, 1, -1, 0, 2, 1, 2,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, -1, 0, -1, 1, 0, 2, -1, 2
 };
 
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetL = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetS = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetZ = RotationOffsetJ;
-const static std::array<std::array<std::array<int,2>, 5>, 4>& RotationOffsetT = RotationOffsetJ;
+const static std::array<std::array<std::array<int, 2>, 5>, 4> &RotationOffsetL = RotationOffsetJ;
+const static std::array<std::array<std::array<int, 2>, 5>, 4> &RotationOffsetS = RotationOffsetJ;
+const static std::array<std::array<std::array<int, 2>, 5>, 4> &RotationOffsetZ = RotationOffsetJ;
+const static std::array<std::array<std::array<int, 2>, 5>, 4> &RotationOffsetT = RotationOffsetJ;
 
 const uint32_t comboScores[] = {0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5};
+
 //TODO::read from config file
-uint32_t utility::scoreTypeToInt(ScoreType scoreType){
+uint32_t utility::scoreTypeToInt(ScoreType scoreType) {
     if (scoreType == ScoreType::None) return 0;
     else if (scoreType == ScoreType::Single) return 0;
     else if (scoreType == ScoreType::Double) return 1;
@@ -95,6 +101,7 @@ bool utility::TSpin(const Grid &grid, const Block &block) {
                 grid.isOccupied(startRow, startColumn + 2) + grid.isOccupied(startRow + 2, startColumn + 2);
     return count >= 3;
 }
+
 bool utility::isDifficultScore(const ScoreType &scoreType) {
     //TODO::read from config file
     if (scoreType == ScoreType::Tetris || scoreType == ScoreType::TSpinMiniSingle ||
@@ -191,10 +198,18 @@ ScoreType utility::getScoreType(const Grid &grid, const Block &block) {
 }
 
 bool utility::checkMiniTSpin(const Grid &grid, const Block &block) {
-    if (block.rotation == 0) return !grid.isOccupied(block.startRow + 2, block.startColumn) || !grid.isOccupied(block.startRow + 2, block.startColumn + 2);
-    if (block.rotation == 1) return !grid.isOccupied(block.startRow + 2, block.startColumn + 2) || !grid.isOccupied(block.startRow, block.startColumn + 2);
-    if (block.rotation == 2) return !grid.isOccupied(block.startRow, block.startColumn + 2) || !grid.isOccupied(block.startRow, block.startColumn);
-    if (block.rotation == 3) return !grid.isOccupied(block.startRow, block.startColumn) || !grid.isOccupied(block.startRow + 2, block.startColumn);
+    if (block.rotation == 0)
+        return !grid.isOccupied(block.startRow + 2, block.startColumn) ||
+               !grid.isOccupied(block.startRow + 2, block.startColumn + 2);
+    if (block.rotation == 1)
+        return !grid.isOccupied(block.startRow + 2, block.startColumn + 2) ||
+               !grid.isOccupied(block.startRow, block.startColumn + 2);
+    if (block.rotation == 2)
+        return !grid.isOccupied(block.startRow, block.startColumn + 2) ||
+               !grid.isOccupied(block.startRow, block.startColumn);
+    if (block.rotation == 3)
+        return !grid.isOccupied(block.startRow, block.startColumn) ||
+               !grid.isOccupied(block.startRow + 2, block.startColumn);
 }
 
 bool utility::rotate(const Grid &grid, Block &block) {
@@ -226,7 +241,8 @@ bool utility::rotate(const Grid &grid, Block &block) {
         for (int row = 0; row < block.rowSize; row++) {
             for (int column = 0; column < block.columnSize; column++) {
                 if (!temShape[column][row]) continue;
-                if (grid.isOccupied(block.startRow + row - offsets[k].second, block.startColumn + column - offsets[k].first)) {
+                if (grid.isOccupied(block.startRow + row - offsets[k].second,
+                                    block.startColumn + column - offsets[k].first)) {
                     flag = false;
                     break;
                 }
@@ -253,8 +269,8 @@ bool utility::moveLeft(const Grid &grid, Block &block) {
     return true;
 }
 
-bool utility::isValid(int startRow_, int startColumn_, const Grid& grid, const Block& block) {
-    const auto& temShape = block.getShape();
+bool utility::isValid(int startRow_, int startColumn_, const Grid &grid, const Block &block) {
+    const auto &temShape = block.getShape();
     for (int row = 0; row < block.rowSize; row++) {
         for (int column = 0; column < block.columnSize; column++) {
             if (temShape[column][row] == 1 && grid.isOccupied(startRow_ + row, startColumn_ + column)) {
@@ -279,7 +295,7 @@ bool utility::moveDown(const Grid &grid, Block &block) {
     return true;
 }
 
-bool utility::valid(const Grid& grid, const Block& block) {
+bool utility::valid(const Grid &grid, const Block &block) {
     return isValid(block.startRow, block.startColumn, grid, block);
 }
 
@@ -316,7 +332,8 @@ bool utility::rotateCounterClockwise(const Grid &grid, Block &block) {
         for (int row = 0; row < block.rowSize; row++) {
             for (int column = 0; column < block.columnSize; column++) {
                 if (!temShape[column][row]) continue;
-                if (grid.isOccupied(block.startRow + row - offsets[k].second, block.startColumn + column - offsets[k].first)) {
+                if (grid.isOccupied(block.startRow + row - offsets[k].second,
+                                    block.startColumn + column - offsets[k].first)) {
                     flag = false;
                     break;
                 }
@@ -334,4 +351,61 @@ bool utility::rotateCounterClockwise(const Grid &grid, Block &block) {
         }
     }
     return false;
+}
+
+bool utility::move(const Grid &grid, Block &block, const Movement &movements) {
+    switch (movements) {
+        case ::Movement::Rotate:
+            return rotate(grid, block);
+            break;
+        case ::Movement::Left:
+            return moveLeft(grid, block);
+            break;
+        case ::Movement::Right:
+            return moveRight(grid, block);
+            break;
+        case ::Movement::Down:
+            return moveDown(grid, block);
+            break;
+        case ::Movement::RotateCounterClockwise:
+            return rotateCounterClockwise(grid, block);
+            break;
+        case ::Movement::Hold:
+            //TODO:: log here which should not be here
+            break;
+        case ::Movement::HardDrop:
+            while (moveDown(grid, block));
+            return true;
+            break;
+
+    }
+    return false;
+}
+
+void utility::move(const Grid &grid, Block &block, const std::vector<Movement> &movements) {
+    for (auto movement: movements) {
+        switch (movement) {
+            case ::Movement::Rotate:
+                rotate(grid, block);
+                break;
+            case ::Movement::Left:
+                moveLeft(grid, block);
+                break;
+            case ::Movement::Right:
+                moveRight(grid, block);
+                break;
+            case ::Movement::Down:
+                while (moveDown(grid, block));
+                break;
+            case ::Movement::RotateCounterClockwise:
+                rotateCounterClockwise(grid, block);
+                break;
+            case::Movement::Hold:
+                //TODO:: log here which should not be here
+                break;
+            case ::Movement::HardDrop:
+                while (moveDown(grid, block));
+                break;
+        }
+    }
 }

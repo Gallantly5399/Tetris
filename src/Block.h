@@ -9,8 +9,17 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
-#include "Grid.h"
 #include <SFML/Graphics.hpp>
+
+enum class Movement {
+    Rotate,
+    Left,
+    Right,
+    Down,
+    RotateCounterClockwise,
+    Hold,
+    HardDrop,
+};
 
 //column first vector
 enum class BlockType{
@@ -24,13 +33,9 @@ enum class BlockType{
     None = 7
 };
 
-enum class Movement {
-    Rotate,
-    Left,
-    Right,
-    Down,
-    RotateCounterClockwise,
-};
+std::ostream &operator<<(std::ostream &os, const Movement &movement);
+std::ostream &operator<<(std::ostream &os, const BlockType &blockType);
+
 // local coordinate
 // for example, the shape of I block is
 //
@@ -49,7 +54,7 @@ struct BlockPosition {
 class Block {
 public:
 
-    Block(BlockType type);
+    explicit Block(BlockType type);
     Block();
     //rotate if valid
     BlockPosition getPosition() const;
@@ -64,13 +69,13 @@ public:
     void setStartColumn(int column);
 //    Block() = delete;
     //Copy constructor
-    Block(const Block& block);
+    Block(const Block& block) = default;
     //Copy assignment
-    Block& operator=(const Block& block);
+    Block& operator=(const Block& block) = default;
     //Move constructor
-    Block(Block&& block) noexcept;
+    Block(Block&& block) noexcept = default;
     //Move assignment
-    Block& operator=(Block&& block) noexcept;
+    Block& operator=(Block&& block) noexcept = default;
     //return shape
     const std::vector<std::vector<int>>& getShape() const;
     sf::Color getColor() const;
@@ -96,4 +101,5 @@ public:
     bool srs = false;
     unsigned int rotation = 0;
     Movement lastMovement;
+    bool isNotSent = true;
 };

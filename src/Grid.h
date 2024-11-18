@@ -5,43 +5,27 @@
 #pragma once
 #include <vector>
 #include <SFML/Graphics.hpp>
-
+#include "Block.h"
 //column first vector
 class Grid {
 public:
+
+    bool backToBack = false;
+    bool holdable = true;
+    Block holdBlock = Block();
+    Block lastBlock = Block();
+    int comboCount = 0;
+
     Grid(int columnSize, int rowSize);
     Grid() = delete;
     //copy constructor
-    Grid(const Grid &grid) {
-        this->columnSize = grid.columnSize;
-        this->rowSize = grid.rowSize;
-        this->grid = grid.grid;
-        this->colors = grid.colors;
-    }
+    Grid(const Grid &grid) = default;
     //copy assignment
-    Grid &operator=(const Grid &grid) {
-        this->columnSize = grid.columnSize;
-        this->rowSize = grid.rowSize;
-        this->grid = grid.grid;
-        this->colors = grid.colors;
-        return *this;
-    }
+    Grid &operator=(const Grid &grid) = default;
     //move constructor
-    Grid(Grid &&grid) noexcept {
-        this->columnSize = grid.columnSize;
-        this->rowSize = grid.rowSize;
-        this->grid = std::move(grid.grid);
-        this->colors = std::move(grid.colors);
-    }
+    Grid(Grid &&grid) noexcept = default;
     //move assignment
-    Grid &operator=(Grid &&grid) noexcept {
-        this->columnSize = grid.columnSize;
-        this->rowSize = grid.rowSize;
-        this->grid = std::move(grid.grid);
-        this->colors = std::move(grid.colors);
-        return *this;
-    }
-
+    Grid &operator=(Grid &&grid) noexcept = default;
     //resize the grid
     void resize(int columnSize, int rowSize);
     //if (row, column) is occupied
@@ -54,7 +38,7 @@ public:
     void clear(int row, int column);
     sf::Color getColor(int row, int column) const;
     //judge if block has exceeded the boundary
-    bool exceed();
+    bool exceed() const;
     void clear();
     bool empty() const;
     //insert the block into the grid
@@ -74,11 +58,8 @@ public:
     int sumOfContinuousEmptyLines() const;
 
     int aggregateHeight() const;
+    bool hold(Block& block);
 
-    bool backToBack = false;
-    bool holdable = true;
-
-    int comboCount = 0;
 private:
     int columnSize, rowSize;
     std::vector<std::vector<int>> grid;

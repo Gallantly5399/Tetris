@@ -77,6 +77,7 @@ Block::Block(BlockType type) : type(type) {
     }
     rowSize = shape[0].size();
     columnSize = shape.size();
+    isNotSent = true;
 }
 
 void Block::rotate() {
@@ -103,51 +104,51 @@ void Block::rotateCounterClockwise() {
     rotation = (rotation + 3) % 4;
 }
 
-Block::Block(const Block &block) {
-    shape = block.shape;
-    color = block.color;
-    type = block.type;
-    rotation = block.rotation;
-    startRow = block.startRow;
-    startColumn = block.startColumn;
-    rowSize = block.rowSize;
-    columnSize = block.columnSize;
-}
-
-Block &Block::operator=(const Block &block) {
-    color = block.color;
-    shape = block.shape;
-    type = block.type;
-    rotation = block.rotation;
-    startRow = block.startRow;
-    startColumn = block.startColumn;
-    rowSize = block.rowSize;
-    columnSize = block.columnSize;
-    return *this;
-}
-
-Block::Block(Block &&block) noexcept {
-    shape = std::move(block.shape);
-    type = block.type;
-    color = block.color;
-    rotation = block.rotation;
-    startRow = block.startRow;
-    startColumn = block.startColumn;
-    rowSize = block.rowSize;
-    columnSize = block.columnSize;
-}
-
-Block &Block::operator=(Block &&block) noexcept {
-    shape = std::move(block.shape);
-    color = block.color;
-    type = block.type;
-    rotation = block.rotation;
-    startRow = block.startRow;
-    startColumn = block.startColumn;
-    rowSize = block.rowSize;
-    columnSize = block.columnSize;
-    return *this;
-}
+//Block::Block(const Block &block) {
+//    shape = block.shape;
+//    color = block.color;
+//    type = block.type;
+//    rotation = block.rotation;
+//    startRow = block.startRow;
+//    startColumn = block.startColumn;
+//    rowSize = block.rowSize;
+//    columnSize = block.columnSize;
+//}
+//
+//Block &Block::operator=(const Block &block) {
+//    color = block.color;
+//    shape = block.shape;
+//    type = block.type;
+//    rotation = block.rotation;
+//    startRow = block.startRow;
+//    startColumn = block.startColumn;
+//    rowSize = block.rowSize;
+//    columnSize = block.columnSize;
+//    return *this;
+//}
+//
+//Block::Block(Block &&block) noexcept {
+//    shape = std::move(block.shape);
+//    type = block.type;
+//    color = block.color;
+//    rotation = block.rotation;
+//    startRow = block.startRow;
+//    startColumn = block.startColumn;
+//    rowSize = block.rowSize;
+//    columnSize = block.columnSize;
+//}
+//
+//Block &Block::operator=(Block &&block) noexcept {
+//    shape = std::move(block.shape);
+//    color = block.color;
+//    type = block.type;
+//    rotation = block.rotation;
+//    startRow = block.startRow;
+//    startColumn = block.startColumn;
+//    rowSize = block.rowSize;
+//    columnSize = block.columnSize;
+//    return *this;
+//}
 
 const std::vector<std::vector<int>>& Block::getShape() const {
     return shape;
@@ -222,4 +223,60 @@ bool Block::getSrs() const {
 
 int Block::getRotation() const {
     return rotation;
+}
+
+std::ostream &operator<<(std::ostream &os, const Movement &movement) {
+    switch (movement) {
+        case Movement::Down:
+            os << "Down";
+            break;
+        case Movement::Left:
+            os << "Left";
+            break;
+        case Movement::Right:
+            os << "Right";
+            break;
+        case Movement::Rotate:
+            os << "Rotate";
+            break;
+        case Movement::RotateCounterClockwise:
+            os << "RotateCounterClockwise";
+            break;
+        case Movement::Hold:
+            os << "Hold";
+            break;
+        case Movement::HardDrop:
+            os << "HardDrop";
+            break;
+    }
+    return os;
+
+}
+std::ostream &operator<<(std::ostream &os, const BlockType &blockType) {
+    switch (blockType) {
+        case BlockType::I:
+            os << "I";
+            break;
+        case BlockType::J:
+            os << "J";
+            break;
+        case BlockType::L:
+            os << "L";
+            break;
+        case BlockType::O:
+            os << "O";
+            break;
+        case BlockType::S:
+            os << "S";
+            break;
+        case BlockType::T:
+            os << "T";
+            break;
+        case BlockType::Z:
+            os << "Z";
+            break;
+        case BlockType::None:
+            os << "None";
+            break;
+    }
 }

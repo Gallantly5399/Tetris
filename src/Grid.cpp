@@ -50,7 +50,7 @@ void Grid::insertBlock(const std::vector<std::vector<int>> &shape, sf::Color col
     }
 }
 
-bool Grid::exceed() {
+bool Grid::exceed() const{
     for (int column = 0; column < columnSize; column++) {
         if (grid[column][rowSize - 2] == 1) return true;
     }
@@ -127,6 +127,10 @@ void Grid::clear(int row, int column) {
 }
 
 void Grid::clear() {
+    backToBack = false;
+    holdable = true;
+    holdBlock = Block();
+    lastBlock = Block();
     for (auto &i: grid) {
         for (int &j: i) j = 0;
     }
@@ -212,7 +216,7 @@ int Grid::sumOfContinuousEmptyLines() const {
         ans = std::max(ans, sum);
         preSum = sum;
     }
-    if (ans > 1) ans = 0;
+    if (ans > 2) ans = 0;
     if (uncontinuousEmptyLines >= 2) {
         return 0;
     }
@@ -226,4 +230,17 @@ bool Grid::empty() const {
         }
     }
     return true;
+}
+
+bool Grid::hold(Block& block) {
+    if (!holdable) return false;
+    holdable = false;
+    if (holdBlock.empty()) {
+        holdBlock = Block(block.getType());
+        block = Block();
+        return true;
+    }
+    BlockType temType = holdBlock.getType();
+    holdBlock = Block(block.getType());
+    block = Block(temType);
 }

@@ -3,7 +3,6 @@
 //
 
 #include "Generator.h"
-
 Generator::Generator() {
     gen = std::mt19937(std::random_device{}());
     for (int i = 0; i < 20; i++) {
