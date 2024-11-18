@@ -270,13 +270,14 @@ public:
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
     void run() {
+        std::ofstream logFile("../log.txt", std::ios::app);
         //TODO:: add concurrency
         std::vector<Candidate> candidates;
         // Initial population generation
         for (int i = 0; i < 100; i++) {
             candidates.emplace_back(generateRandomCandidate());
         }
-        std::cout << "Computing fitnesses of initial candidates.\n";
+        logFile << "Computing fitnesses of initial candidates.\n" << std::flush;
         //timer
         computeFitnesses(candidates, 10, 300);
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
@@ -296,11 +297,11 @@ public:
                 normalize(candidate);
                 newCandidates.push_back(candidate);
             }
-            std::cout << "Computing fitnesses of new candidates. (" + std::to_string(count) + ")\n";
+            logFile << "Computing fitnesses of new candidates. (" + std::to_string(count) + ")\n" << std::flush;
             computeFitnesses(newCandidates, 10, 300);
-            std::cout
+            logFile
                     << "Replacing the least 30% of the population with the new candidates. (" + std::to_string(count) +
-                       ")\n";
+                       ")\n" << std::flush;
             deleteNLastReplacement(candidates, newCandidates);
             int totalFitness = 0;
             for (int i = 0; i < candidates.size(); i++) {
@@ -309,9 +310,9 @@ public:
 
             //TODO::reflection
             //TODO::write to file
-            std::cout << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
-            std::cout << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
-            std::cout << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
+            logFile << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
+            logFile << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
+            logFile << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
                       "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
                       << candidates[0].holesWeight << ',' <<
                       "scoreWeight:" << candidates[0].scoreWeight <<
@@ -324,7 +325,7 @@ public:
                         ",singleWeight:" << candidates[0].singleWeight <<
                         ",doubleWeight:" << candidates[0].doubleWeight <<
                         ",tripleWeight:" << candidates[0].tripleWeight <<
-                      "(" << count << ")\n";
+                      "(" << count << ")\n" << std::flush;
             count++;
         }
     };
