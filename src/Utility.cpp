@@ -409,3 +409,19 @@ void utility::move(const Grid &grid, Block &block, const std::vector<Movement> &
         }
     }
 }
+
+bool utility::isTspin(ScoreType scoreType) {
+    if (scoreType == ScoreType::TSpinSingle || scoreType == ScoreType::TSpinDouble ||
+        scoreType == ScoreType::TSpinTriple) {
+        return true;
+    }
+    return false;
+}
+
+bool utility::isPerfectClear(ScoreType scoreType) {
+    if (scoreType == ScoreType::SinglePerfectClear || scoreType == ScoreType::DoublePerfectClear ||
+        scoreType == ScoreType::TriplePerfectClear || scoreType == ScoreType::TetrisPerfectClear) {
+        return true;
+    }
+    return false;
+}

@@ -59,4 +59,6 @@ namespace utility {
     bool rotateCounterClockwise(const Grid& grid, Block& block);
     void move(const Grid& grid, Block& block, const std::vector<Movement>& movements);
     bool move(const Grid& grid, Block& block, const Movement& movement);
+    bool isTspin(ScoreType scoreType);
+    bool isPerfectClear(ScoreType scoreType);
 }

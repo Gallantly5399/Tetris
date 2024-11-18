@@ -19,6 +19,12 @@ struct Candidate {
     int32_t emptyLinesWeight;
     int32_t backToBackWeight;
     int32_t comboWeight;
+    int32_t tetrisWeight;
+    int32_t perfectClearWeight;
+    int32_t tSpinWeight;
+    int32_t singleWeight;
+    int32_t doubleWeight;
+    int32_t tripleWeight;
     int64_t fitness;
 };
 
@@ -33,6 +39,12 @@ public:
                   << ",emptyLinesWeight:" << candidate.emptyLinesWeight
                   << ",backToBackWeight:" << candidate.backToBackWeight
                   << ",comboWeight" << candidate.comboWeight
+                  << ",tetrisWeight" << candidate.tetrisWeight
+                  << ",perfectClearWeight" << candidate.perfectClearWeight
+                  << ",tSpinWeight" << candidate.tSpinWeight
+                  << ",singleWeight" << candidate.singleWeight
+                  << ",doubleWeight" << candidate.doubleWeight
+                  << ",tripleWeight" << candidate.tripleWeight
                   << '\n';
     }
 
@@ -42,24 +54,36 @@ public:
     }
 
     static void normalize(Candidate &candidate) {
-        candidate.heightWeight = std::max( 1, std::min(1000, candidate.heightWeight));
+        candidate.heightWeight = std::max(1, std::min(1000, candidate.heightWeight));
         candidate.scoreWeight = std::max(1, std::min(1000, candidate.scoreWeight));
         candidate.holesWeight = std::max(1, std::min(1000, candidate.holesWeight));
-        candidate.bumpinessWeight = std::max( 1, std::min( 1000, candidate.bumpinessWeight));
-        candidate.emptyLinesWeight = std::max( 1, std::min( 1000, candidate.emptyLinesWeight));
-        candidate.backToBackWeight = std::max( 1, std::min( 1000, candidate.backToBackWeight));
-        candidate.comboWeight = std::max( 1, std::min( 1000, candidate.comboWeight));
+        candidate.bumpinessWeight = std::max(1, std::min(1000, candidate.bumpinessWeight));
+        candidate.emptyLinesWeight = std::max(1, std::min(1000, candidate.emptyLinesWeight));
+        candidate.backToBackWeight = std::max(1, std::min(1000, candidate.backToBackWeight));
+        candidate.comboWeight = std::max(1, std::min(1000, candidate.comboWeight));
+        candidate.tetrisWeight = std::max(1, std::min(1000, candidate.tetrisWeight));
+        candidate.perfectClearWeight = std::max(1, std::min(1000, candidate.perfectClearWeight));
+        candidate.tSpinWeight = std::max(1, std::min(1000, candidate.tSpinWeight));
+        candidate.singleWeight = std::max(1, std::min(1000, candidate.singleWeight));
+        candidate.doubleWeight = std::max(1, std::min(1000, candidate.doubleWeight));
+        candidate.tripleWeight = std::max(1, std::min(1000, candidate.tripleWeight));
     }
 
     Candidate generateRandomCandidate() {
         Candidate candidate = {
-                .heightWeight = randomInteger(0, 1000),
-                .scoreWeight = randomInteger(0, 1000),
-                .holesWeight = randomInteger(0, 1000),
-                .bumpinessWeight = randomInteger(0, 1000),
-                .emptyLinesWeight =randomInteger(0, 1000),
-                .backToBackWeight = randomInteger(0, 1000),
-                .comboWeight = randomInteger(0, 1000),
+                .heightWeight = randomInteger(1, 1000),
+                .scoreWeight = randomInteger(1, 1000),
+                .holesWeight = randomInteger(1, 1000),
+                .bumpinessWeight = randomInteger(1, 1000),
+                .emptyLinesWeight =randomInteger(1, 1000),
+                .backToBackWeight = randomInteger(1, 1000),
+                .comboWeight = randomInteger(1, 1000),
+                .tetrisWeight = randomInteger(1, 1000),
+                .perfectClearWeight = randomInteger(1, 1000),
+                .tSpinWeight = randomInteger(1, 1000),
+                .singleWeight = randomInteger(1, 1000),
+                .doubleWeight = randomInteger(1, 1000),
+                .tripleWeight = randomInteger(1, 1000),
         };
 //        normalize(candidate);
         return candidate;
@@ -84,81 +108,84 @@ public:
             thread.join();
         }
     }
-    void runForPreview() {
-        //TODO:: add concurrency
-        std::vector<Candidate> candidates;
-        // Initial population generation
-        for (int i = 0; i < 100; i++) {
-            candidates.emplace_back(generateRandomCandidate());
-        }
-        std::cout << "Computing fitnesses of initial candidates.\n";
-        //timer
-        int numberOfGames = 1;
-        int maxNumberOfMoves = 400;
-        for (int i = 0; i < candidates.size(); i++) {
-            Candidate &candidate = candidates[i];
-            AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
-                       candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
-                       candidate.comboWeight);
-            uint64_t totalScore = 0;
-            int totalMovement = 0;
-            for (int j = 0; j < numberOfGames; j++) {
-                Grid grid(10, 22);
-                Generator rpg{};
 
-                uint64_t score = 0;
-                int numberOfMoves = 0;
-                while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
-                    Block workingPiece = rpg.nextBlock();
-                    std::vector<Block> workingPieces = {workingPiece};
-                    for (const auto &piece: rpg.seeNextBlocks(9)) workingPieces.push_back(piece);
-                    auto [_nouse, movements, _grid_nouse_1, bestBlock_nouse] = ai.best_(grid, workingPieces);
-                    //TODO::move
-                    draw(grid, workingPiece, rpg);
-                    for (auto movement : movements) {
-                        std::cerr << movement << ' ';
-                    }
-                    std::cout << '\n';
-                    for (auto movement: movements) {
-                        if (movement == Movement::Hold) {
-                            if (movements.size() != 1) {
-                                //TODO::Log
-                                std::cerr << "Hold is not the only movement\n";
-                            }
-                            grid.hold(workingPiece);
-                            if (workingPiece.empty()) continue;
-                            auto [_score_nouse, secondMovements, _grid_nouse_2, _bsetb] = ai.best_(grid, workingPieces);
-                            for (auto secondMovement: secondMovements) {
-                                if (secondMovement == Movement::Hold) { //TODO::Log
-                                    std::cerr << "Hold is not the only movement\n";
-                                }
-                                if (!utility::move(grid, workingPiece, secondMovement)) {
-                                    std::cerr << "Invalid movement1\n";
-                                    draw(grid, workingPiece, rpg);
-                                }
-                            }
-                        } else {
-                            if (!utility::move(grid, workingPiece, movement)) {
-                                std::cerr << "Invalid movement2;" << movement << ", ";
-                                draw(grid, workingPiece, rpg);
-                                exit(-1);
-                            }
-                        }
-                    }
-                    if (!workingPiece.empty()) {
-                        utility::insertBlock(grid, workingPiece);
-                        score += utility::getScore(grid, workingPiece);
-                    }
-                }
-                totalMovement += numberOfMoves;
-                totalScore += score;
-            }
-            std::cerr << "totalMovement:" << totalMovement << '\n';
-            candidate.fitness = totalScore;
-        }
-        std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
-            return a.fitness > b.fitness;
-        });
+//    void runForPreview() {
+//        //TODO:: add concurrency
+//        std::vector<Candidate> candidates;
+//        // Initial population generation
+//        for (int i = 0; i < 100; i++) {
+//            candidates.emplace_back(generateRandomCandidate());
+//        }
+//        std::cout << "Computing fitnesses of initial candidates.\n";
+//        //timer
+//        int numberOfGames = 1;
+//        int maxNumberOfMoves = 400;
+//        for (int i = 0; i < candidates.size(); i++) {
+//            Candidate &candidate = candidates[i];
+//            AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
+//                       candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
+//                       candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
+//                       candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight);
+//
+//            uint64_t totalScore = 0;
+//            int totalMovement = 0;
+//            for (int j = 0; j < numberOfGames; j++) {
+//                Grid grid(10, 22);
+//                Generator rpg{};
+//
+//                uint64_t score = 0;
+//                int numberOfMoves = 0;
+//                while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
+//                    Block workingPiece = rpg.nextBlock();
+//                    std::vector<Block> workingPieces = {workingPiece};
+//                    for (const auto &piece: rpg.seeNextBlocks(9)) workingPieces.push_back(piece);
+//                    auto [_nouse, movements, _grid_nouse_1, bestBlock_nouse] = ai.best_(grid, workingPieces);
+//                    //TODO::move
+//                    draw(grid, workingPiece, rpg);
+//                    for (auto movement: movements) {
+//                        std::cerr << movement << ' ';
+//                    }
+//                    std::cout << '\n';
+//                    for (auto movement: movements) {
+//                        if (movement == Movement::Hold) {
+//                            if (movements.size() != 1) {
+//                                //TODO::Log
+//                                std::cerr << "Hold is not the only movement\n";
+//                            }
+//                            grid.hold(workingPiece);
+//                            if (workingPiece.empty()) continue;
+//                            auto [_score_nouse, secondMovements, _grid_nouse_2, _bsetb] = ai.best_(grid, workingPieces);
+//                            for (auto secondMovement: secondMovements) {
+//                                if (secondMovement == Movement::Hold) { //TODO::Log
+//                                    std::cerr << "Hold is not the only movement\n";
+//                                }
+//                                if (!utility::move(grid, workingPiece, secondMovement)) {
+//                                    std::cerr << "Invalid movement1\n";
+//                                    draw(grid, workingPiece, rpg);
+//                                }
+//                            }
+//                        } else {
+//                            if (!utility::move(grid, workingPiece, movement)) {
+//                                std::cerr << "Invalid movement2;" << movement << ", ";
+//                                draw(grid, workingPiece, rpg);
+//                                exit(-1);
+//                            }
+//                        }
+//                    }
+//                    if (!workingPiece.empty()) {
+//                        utility::insertBlock(grid, workingPiece);
+//                        score += utility::getScore(grid, workingPiece);
+//                    }
+//                }
+//                totalMovement += numberOfMoves;
+//                totalScore += score;
+//            }
+//            std::cerr << "totalMovement:" << totalMovement << '\n';
+//            candidate.fitness = totalScore;
+//        }
+//        std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
+//            return a.fitness > b.fitness;
+//        });
 
 //        int count = 0;
 //        for (int _ = 0; _ < 10000; _++) {
@@ -194,7 +221,8 @@ public:
 //            }
 //            count++;
 //        }
-    }
+//    }
+
     std::pair<Candidate, Candidate> tournamentSelectPair(const std::vector<Candidate> &candidates, int ways) {
         std::vector<int> indices;
         for (int i = 0; i < candidates.size(); i++) {
@@ -234,15 +262,33 @@ public:
         }
         Candidate candidate = {
                 .heightWeight = static_cast<int32_t>(coefficient1 * candidate1.heightWeight +
-                                coefficient2 * candidate2.heightWeight),
+                                                     coefficient2 * candidate2.heightWeight),
                 .scoreWeight =  static_cast<int32_t>(coefficient1 * candidate1.scoreWeight +
-                               coefficient2 * candidate2.scoreWeight),
+                                                     coefficient2 * candidate2.scoreWeight),
                 .holesWeight = static_cast<int32_t>(coefficient1 * candidate1.holesWeight +
-                               coefficient2 * candidate2.holesWeight),
+                                                    coefficient2 * candidate2.holesWeight),
                 .bumpinessWeight = static_cast<int32_t>(coefficient1 * candidate1.bumpinessWeight +
-                                   coefficient2 * candidate2.bumpinessWeight),
+                                                        coefficient2 * candidate2.bumpinessWeight),
                 .emptyLinesWeight = static_cast<int32_t>(coefficient1 * candidate1.emptyLinesWeight +
-                                    coefficient2 * candidate2.emptyLinesWeight),
+                                                         coefficient2 * candidate2.emptyLinesWeight),
+                .backToBackWeight = static_cast<int32_t>(coefficient1 * candidate1.backToBackWeight +
+                                                         coefficient2 * candidate2.backToBackWeight),
+                .comboWeight = static_cast<int32_t>(coefficient1 * candidate1.comboWeight +
+                                                    coefficient2 * candidate2.comboWeight),
+                .tetrisWeight = static_cast<int32_t>(coefficient1 * candidate1.tetrisWeight +
+                                                     coefficient2 * candidate2.tetrisWeight),
+                .perfectClearWeight = static_cast<int32_t>(coefficient1 * candidate1.perfectClearWeight +
+                                                           coefficient2 * candidate2.perfectClearWeight),
+                .tSpinWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinWeight +
+                                                    coefficient2 * candidate2.tSpinWeight),
+                .singleWeight = static_cast<int32_t>(coefficient1 * candidate1.singleWeight +
+                                                     coefficient2 * candidate2.singleWeight),
+                .doubleWeight = static_cast<int32_t>(coefficient1 * candidate1.doubleWeight +
+                                                     coefficient2 * candidate2.doubleWeight),
+                .tripleWeight = static_cast<int32_t>(coefficient1 * candidate1.tripleWeight +
+                                                     coefficient2 * candidate2.tripleWeight),
+
+
         };
         normalize(candidate);
         return candidate;
@@ -250,8 +296,8 @@ public:
 
     void mutate(Candidate &candidate) {
         auto quantity = randomInteger(-100, 100);
-        for (int i = 0;i < 3;i ++) {
-            switch (randomInteger(0, 7)) {
+        for (int i = 0; i < 3; i++) {
+            switch (randomInteger(0, 12)) {
                 case 0:
                     quantity = randomInteger(-candidate.heightWeight + 1, candidate.heightWeight);
                     candidate.heightWeight = std::max(candidate.heightWeight + quantity, 0);
@@ -279,6 +325,30 @@ public:
                 case 6:
                     quantity = randomInteger(-candidate.comboWeight + 1, candidate.comboWeight);
                     candidate.comboWeight = std::max(candidate.comboWeight + quantity, 0);
+                    break;
+                case 7:
+                    quantity = randomInteger(-candidate.tetrisWeight + 1, candidate.tetrisWeight);
+                    candidate.tetrisWeight = std::max(candidate.tetrisWeight + quantity, 0);
+                    break;
+                case 8:
+                    quantity = randomInteger(-candidate.perfectClearWeight + 1, candidate.perfectClearWeight);
+                    candidate.perfectClearWeight = std::max(candidate.perfectClearWeight + quantity, 0);
+                    break;
+                case 9:
+                    quantity = randomInteger(-candidate.tSpinWeight + 1, candidate.tSpinWeight);
+                    candidate.tSpinWeight = std::max(candidate.tSpinWeight + quantity, 0);
+                    break;
+                case 10:
+                    quantity = randomInteger(-candidate.singleWeight + 1, candidate.singleWeight);
+                    candidate.singleWeight = std::max(candidate.singleWeight + quantity, 0);
+                    break;
+                case 11:
+                    quantity = randomInteger(-candidate.doubleWeight + 1, candidate.doubleWeight);
+                    candidate.doubleWeight = std::max(candidate.doubleWeight + quantity, 0);
+                    break;
+                case 12:
+                    quantity = randomInteger(-candidate.tripleWeight + 1, candidate.tripleWeight);
+                    candidate.tripleWeight = std::max(candidate.tripleWeight + quantity, 0);
                     break;
             }
         }
@@ -321,7 +391,7 @@ public:
             for (int i = 0; i < 30; i++) { // 30% of population
                 auto pair = tournamentSelectPair(candidates, 10); // 10% of population
                 Candidate candidate = crossOver(pair.first, pair.second);
-                if (randomInteger(1, 100) <= 5) {
+                if (randomInteger(1, 100) <= 10) {
                     mutate(candidate);
 //                    output(candidate);
                 }
@@ -338,22 +408,32 @@ public:
             for (int i = 0; i < candidates.size(); i++) {
                 totalFitness += candidates[i].fitness;
             }
-                std::cout << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
-                std::cout << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
-                std::cout << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
-                          "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
-                          << candidates[0].holesWeight << ',' <<
-                          "scoreWeight:" << candidates[0].scoreWeight <<
-                          ",emptyLinesWeight:" << candidates[0].emptyLinesWeight <<
-                            ",backToBackWeight:" << candidates[0].backToBackWeight <<
-                            ",comboWeight:" << candidates[0].comboWeight <<
-                          "(" << count << ")\n";
+
+            //TODO::reflection
+            //TODO::write to file
+            std::cout << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
+            std::cout << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
+            std::cout << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
+                      "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
+                      << candidates[0].holesWeight << ',' <<
+                      "scoreWeight:" << candidates[0].scoreWeight <<
+                      ",emptyLinesWeight:" << candidates[0].emptyLinesWeight <<
+                      ",backToBackWeight:" << candidates[0].backToBackWeight <<
+                      ",comboWeight:" << candidates[0].comboWeight <<
+                      ",tetrisWeight:" << candidates[0].tetrisWeight <<
+                        ",perfectClearWeight:" << candidates[0].perfectClearWeight <<
+                        ",tSpinWeight:" << candidates[0].tSpinWeight <<
+                        ",singleWeight:" << candidates[0].singleWeight <<
+                        ",doubleWeight:" << candidates[0].doubleWeight <<
+                        ",tripleWeight:" << candidates[0].tripleWeight <<
+                      "(" << count << ")\n";
             count++;
         }
     };
 
 private:
     UI ui{};
+
     void processKey() {
         sf::Event event;
         while (ui.getWindow().pollEvent(event)) {
@@ -362,10 +442,11 @@ private:
                 ui.getWindow().close();
         }
     }
-    void draw(const Grid& grid, const Block& block, Generator& generator) {
+
+    void draw(const Grid &grid, const Block &block, Generator &generator) {
         //render for 5 seconds
         auto start = std::chrono::high_resolution_clock::now();
-        while(ui.getWindow().isOpen()) {
+        while (ui.getWindow().isOpen()) {
             auto end = std::chrono::high_resolution_clock::now();
             if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() > 2) {
                 break;
@@ -387,13 +468,16 @@ private:
             ui.display();
         }
     }
+
 //
     std::mt19937 gen;
+
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
                    candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
-                   candidate.comboWeight);
+                   candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
+                   candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight);
         uint64_t totalScore = 0;
         int totalMovement = 0;
         for (int j = 0; j < numberOfGames; j++) {
@@ -406,7 +490,7 @@ private:
                 Block workingPiece = rpg.nextBlock();
                 std::vector<Block> workingPieces = {workingPiece};
                 for (const auto &piece: rpg.seeNextBlocks(9)) workingPieces.push_back(piece);
-                auto [_nouse, movements, _grid_nouse_1,_dmakd] = ai.best_(grid, workingPieces);
+                auto [_nouse, movements, _grid_nouse_1, _dmakd] = ai.best_(grid, workingPieces);
                 //TODO::move
                 for (auto movement: movements) {
                     if (movement == Movement::Hold) {
@@ -453,6 +537,7 @@ private:
 //        std::cerr << "totalMovement:" << totalMovement << '\n';
         candidate.fitness = totalScore;
     }
+
     int randomInteger(int min, int max) {
         return std::uniform_int_distribution<int>(min, max)(gen);
     }

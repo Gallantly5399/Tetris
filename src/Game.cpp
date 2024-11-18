@@ -267,7 +267,7 @@ bool Game::TSpin() const {
 }
 
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
-               ai(209, 423, 706, 8,924 ,1,1 ) {
+               ai(209, 423, 706, 8,924 ,1, 1, 1, 1, 1, 1, 1, 1) {
     block = generator.nextBlock();
     aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();

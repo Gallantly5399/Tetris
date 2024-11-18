@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include "Utility.h"
 #include "Grid.h"
 #include <random>
@@ -52,13 +53,15 @@ public:
         Grid grid;
         Block bestBlock;
 
-        Candidate(int64_t _score, const Grid &_grid, const std::vector<Movement>& _movements) : score(_score), grid(_grid),
-        movements(_movements) {}
+        Candidate(int64_t _score, const Grid &_grid, const std::vector<Movement> &_movements) : score(_score),
+                                                                                                grid(_grid),
+                                                                                                movements(_movements) {}
 //        Candidate(double _score, const std::vector<Block>& _blocks, const Grid &_grid) : score(_score), grid(_grid), blocks(_blocks) {}
     };
 
     AI(int32_t heightWeight, int32_t scoreWeight, int32_t holesWeight, int32_t bumpinessWeight, int32_t emptyLineWeight,
-       int32_t backToBackWeight, int32_t comboWeight) {
+       int32_t backToBackWeight, int32_t comboWeight, int32_t tetrisWeight, int32_t perfectClearWeight,
+       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight) {
         this->heightWeight = heightWeight;
         this->scoreWeight = scoreWeight;
         this->holesWeight = holesWeight;
@@ -66,6 +69,13 @@ public:
         this->emptyLineWeight = emptyLineWeight;
         this->backToBackWeight = backToBackWeight;
         this->comboWeight = comboWeight;
+        this->tetrisWeight = tetrisWeight;
+        this->perfectClearWeight = perfectClearWeight;
+        this->tSpinWeight = tSpinWeight;
+        this->singleWeight = singleWeight;
+        this->doubleWeight = doubleWeight;
+        this->tripleWeight = tripleWeight;
+        this->tetrisWeight = tetrisWeight;
     }
 
     void best(MovementData &movements) {
@@ -74,7 +84,7 @@ public:
             if (blockQueue.empty()) continue;
             auto [workingPieces, grid] = blockQueue.front();
             blockQueue.pop();
-            auto [bestScore,bestMovement, bestGrid, bestBlock] = this->best_(grid, workingPieces);
+            auto [bestScore, bestMovement, bestGrid, bestBlock] = this->best_(grid, workingPieces);
             for (auto movement: bestMovement) {
                 movements.write(movement);
             }
@@ -122,10 +132,11 @@ public:
         isStop = true;
     }
 
-    void add(const std::vector<Block>& blocks, const Grid& grid) {
+    void add(const std::vector<Block> &blocks, const Grid &grid) {
         blockQueue.emplace(blocks, grid);
 //        std::cout << "Add block to queue\n";
     }
+
     Candidate best_(const Grid &grid, const std::vector<Block> &workingPieces) {
         //TODO:: beam search instead of dfs
         std::vector<Candidate> candidates, totalCandidates;
@@ -135,7 +146,7 @@ public:
             for (auto &[score, movements, workingGrid, _bestBlock_nouse]: candidates) {
                 //TODO::add soft drop
                 //TODO::add hold
-                const Block& workingPiece = workingPieces[workingIndex];
+                const Block &workingPiece = workingPieces[workingIndex];
                 Grid temGrid = workingGrid;
                 if (temGrid.holdable) {
                     temGrid.holdable = false;
@@ -165,25 +176,34 @@ public:
         }
         return candidates[0];
     }
-    [[nodiscard]] int64_t evaluateFirst(const Grid& grid) const{
+
+    [[nodiscard]] int64_t evaluateFirst(const Grid &grid) const {
         if (grid.exceed()) return std::numeric_limits<int64_t>::lowest();
+        ScoreType scoreType = utility::getScoreType(grid, grid.lastBlock);
         int64_t currentScore =
-                (int64_t)-heightWeight * grid.aggregateHeight() - holesWeight * grid.holes()
-                - bumpinessWeight * grid.bumpiness() + emptyLineWeight * grid.sumOfContinuousEmptyLines() + backToBackWeight * grid.backToBack
-                + comboWeight * grid.comboCount;
+                (int64_t) -heightWeight * grid.aggregateHeight() - holesWeight * grid.holes()
+                - bumpinessWeight * grid.bumpiness() + emptyLineWeight * grid.sumOfContinuousEmptyLines()
+                + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount + tetrisWeight * (scoreType == ScoreType::Tetris)
+                + tSpinWeight * utility::isTspin(scoreType) + perfectClearWeight * utility::isPerfectClear(scoreType)
+                - singleWeight * (scoreType == ScoreType::Single) - doubleWeight * (scoreType == ScoreType::Double)
+                + tripleWeight * (scoreType == ScoreType::Triple);
         return currentScore;
     }
-    [[nodiscard]] int64_t evaluate(Grid& grid) const {
+
+    [[nodiscard]] int64_t evaluate(Grid &grid) const {
         int64_t score = evaluateFirst(grid);
         if (!grid.lastBlock.empty())
             score += scoreWeight * utility::scoreForAI(grid, grid.lastBlock);
         return score;
     }
+
 private:
     ///search for the best movement for the block
     ///block is the block to be inserted
     ///candidates is the vector to store the candidates
-    void search(const Grid& grid, const Block& block, std::vector<Candidate>& candidates, std::vector<Movement> bestMovement, bool record = false) const {
+    void
+    search(const Grid &grid, const Block &block, std::vector<Candidate> &candidates, std::vector<Movement> bestMovement,
+           bool record = false) const {
         for (int rotation = 0; rotation < 4; rotation++) {
             std::vector<Movement> movements;
             Block _piece = block;
@@ -192,7 +212,7 @@ private:
                     movements.push_back(Movement::Rotate);
                 }
             } else {
-                for (int i = 0;i < 4 - rotation;i ++) {
+                for (int i = 0; i < 4 - rotation; i++) {
                     movements.push_back(Movement::RotateCounterClockwise);
                 }
             }
@@ -215,22 +235,28 @@ private:
                 int64_t currentScore = evaluate(_grid);
                 auto temMovement = movements;
                 temMovement.push_back(Movement::HardDrop);
-                if (record)  candidates.emplace_back(currentScore, _grid, temMovement);
+                if (record) candidates.emplace_back(currentScore, _grid, temMovement);
                 else candidates.emplace_back(currentScore, _grid, bestMovement);
                 if (!movements.empty() && movements.back() == Movement::Left) movements.pop_back();
                 else movements.push_back(Movement::Right);
             } while (utility::moveRight(grid, _piece));
         }
     }
+
     std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
     bool isStop = false;
     //millisecond time for per block
     int32_t heightWeight;
-    int32_t  scoreWeight;
-    int32_t  holesWeight;
-    int32_t  bumpinessWeight;
-    int32_t  emptyLineWeight;
-    int32_t  backToBackWeight;
-    int32_t  comboWeight;
-
+    int32_t scoreWeight;
+    int32_t holesWeight;
+    int32_t bumpinessWeight;
+    int32_t emptyLineWeight;
+    int32_t backToBackWeight;
+    int32_t comboWeight;
+    int32_t tetrisWeight;
+    int32_t perfectClearWeight;
+    int32_t tSpinWeight;
+    int32_t singleWeight;
+    int32_t doubleWeight;
+    int32_t tripleWeight;
 };
