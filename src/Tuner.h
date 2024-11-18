@@ -53,8 +53,8 @@ public:
     Tuner() {
         std::random_device rd;
         gen = std::mt19937(rd());
-        const std::filesystem::path projectPath(FILE_LOCATION);
-        auto config = toml::parse_file((projectPath / "config.toml").c_str());
+//        const std::filesystem::path projectPath(FILE_LOCATION);
+        auto config = toml::parse_file("../config.toml");
         MAX_THREAD = config["tuner"]["MAX_THREAD"].value_or(1);
     }
 
