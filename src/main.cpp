@@ -1,4 +1,4 @@
-#include "Game.h"
+//#include "Game.h"
 
 //SFML coordinate system
 // -----------x
