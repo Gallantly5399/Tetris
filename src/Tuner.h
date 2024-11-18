@@ -9,6 +9,7 @@
 #include <algorithm>
 #include "Generator.h"
 #include <toml++/toml.hpp>
+#include <filesystem>
 #include "Ai.h"
 
 //TODO::modify linesWeight to scoreWeight
