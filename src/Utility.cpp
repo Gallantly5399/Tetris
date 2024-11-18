@@ -81,14 +81,16 @@ uint32_t utility::getScore(Grid &grid, const Block &block) {
     if (isDifficultScore(scoreType)) {
         grid.backToBack = true;
         grid.comboCount++;
+        score += grid.backToBack;
     } else if (scoreType == ScoreType::Single || scoreType == ScoreType::Double || scoreType == ScoreType::Triple) {
         grid.backToBack = false;
         grid.comboCount++;
+        score += grid.backToBack;
     } else {
         assert(scoreTypeToInt(scoreType) <= 0);
         grid.comboCount = -1;
     }
-    score += comboScores[std::min(std::max(grid.comboCount, 0), 10)] + grid.backToBack;
+    score += comboScores[std::min(std::max(grid.comboCount, 0), 10)];
     grid.clearLines();
     return score;
 }

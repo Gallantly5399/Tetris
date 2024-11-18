@@ -56,6 +56,10 @@ public:
 //        const std::filesystem::path projectPath(FILE_LOCATION);
         auto config = toml::parse_file("../config.toml");
         MAX_THREAD = config["tuner"]["MAX_THREAD"].value_or(1);
+        MAX_MOVES = config["tuner"]["MAX_MOVES"].value_or(300);
+        MAX_GAMES = config["tuner"]["MAX_GAMES"].value_or(10);
+        MAX_POPULATIONS = config["tuner"]["MAX_POPULATIONS"].value_or(100);
+        MAX_GENERATIONS = config["tuner"]["MAX_GENERATIONS"].value_or(1000);
     }
 
     static void normalize(Candidate &candidate) {
@@ -274,18 +278,18 @@ public:
         //TODO:: add concurrency
         std::vector<Candidate> candidates;
         // Initial population generation
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < MAX_POPULATIONS; i++) {
             candidates.emplace_back(generateRandomCandidate());
         }
         logFile << "Computing fitnesses of initial candidates.\n" << std::flush;
         //timer
-        computeFitnesses(candidates, 10, 300);
+        computeFitnesses(candidates, MAX_GAMES, MAX_MOVES);
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
             return a.fitness > b.fitness;
         });
 
         int count = 0;
-        for (int _ = 0; _ < 10000; _++) {
+        for (int _ = 0; _ < MAX_GENERATIONS; _++) {
             std::vector<Candidate> newCandidates;
             for (int i = 0; i < 30; i++) { // 30% of population
                 auto pair = tournamentSelectPair(candidates, 10); // 10% of population
@@ -298,7 +302,7 @@ public:
                 newCandidates.push_back(candidate);
             }
             logFile << "Computing fitnesses of new candidates. (" + std::to_string(count) + ")\n" << std::flush;
-            computeFitnesses(newCandidates, 10, 300);
+            computeFitnesses(newCandidates, MAX_GAMES, MAX_MOVES);
             logFile
                     << "Replacing the least 30% of the population with the new candidates. (" + std::to_string(count) +
                        ")\n" << std::flush;
@@ -333,6 +337,11 @@ public:
 private:
     std::mt19937 gen;
     uint32_t MAX_THREAD = 1;
+    uint32_t MAX_MOVES = 300;
+    uint32_t MAX_GAMES = 10;
+    uint32_t MAX_POPULATIONS = 100;
+    uint32_t MAX_GENERATIONS = 1000;
+
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,

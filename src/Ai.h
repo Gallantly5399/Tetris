@@ -138,7 +138,6 @@ public:
     }
 
     Candidate best_(const Grid &grid, const std::vector<Block> &workingPieces) {
-        //TODO:: beam search instead of dfs
         std::vector<Candidate> candidates, totalCandidates;
 
         candidates.emplace_back(evaluateFirst(grid), grid, std::vector<Movement>{});

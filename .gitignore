@@ -215,4 +215,6 @@ $RECYCLE.BIN/
 *.lnk
 build
 dependence/lib
+
+log*
 # End of https://www.toptal.com/developers/gitignore/api/macos,clion+all,c++,cmake,windows,linux
