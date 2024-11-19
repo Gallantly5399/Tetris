@@ -61,7 +61,7 @@ public:
 
     AI(int32_t heightWeight, int32_t scoreWeight, int32_t holesWeight, int32_t bumpinessWeight, int32_t emptyLineWeight,
        int32_t backToBackWeight, int32_t comboWeight, int32_t tetrisWeight, int32_t perfectClearWeight,
-       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight) {
+       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight, int32_t highestWeight) {
         this->heightWeight = heightWeight;
         this->scoreWeight = scoreWeight;
         this->holesWeight = holesWeight;
@@ -76,6 +76,7 @@ public:
         this->doubleWeight = doubleWeight;
         this->tripleWeight = tripleWeight;
         this->tetrisWeight = tetrisWeight;
+        this->highestWeight = highestWeight;
     }
 
     void best(MovementData &movements) {
@@ -185,7 +186,8 @@ public:
                 + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount + tetrisWeight * (scoreType == ScoreType::Tetris)
                 + tSpinWeight * utility::isTspin(scoreType) + perfectClearWeight * utility::isPerfectClear(scoreType)
                 - singleWeight * (scoreType == ScoreType::Single) - doubleWeight * (scoreType == ScoreType::Double)
-                + tripleWeight * (scoreType == ScoreType::Triple);
+                + tripleWeight * (scoreType == ScoreType::Triple)
+                - highestWeight * grid.highest();
         return currentScore;
     }
 
@@ -258,4 +260,5 @@ private:
     int32_t singleWeight;
     int32_t doubleWeight;
     int32_t tripleWeight;
+    int32_t highestWeight;
 };

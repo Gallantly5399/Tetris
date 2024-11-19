@@ -56,7 +56,7 @@ public:
 
     //the sum of the continuous empty lines
     int sumOfContinuousEmptyLines() const;
-
+    int highest() const;
     int aggregateHeight() const;
     bool hold(Block& block);
 

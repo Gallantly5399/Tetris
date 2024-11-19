@@ -4,7 +4,7 @@ MAX_RENDER_FRAMES = 60
 MAX_GRAVITY_LEVEL = 13 #1G
 
 [ai]
-MAX_AI_MOVEMENTS_PER_SECOND = 10
+MAX_AI_MOVEMENTS_PER_SECOND = 100
 MAX_NEXT_BLOCK = 10
 # HEIGHT_WEIGHT = 109
 # BUMPINESS_WEIGHT = 8
@@ -13,13 +13,16 @@ MAX_NEXT_BLOCK = 10
 # EMPRY_LINES_WEIGHT = 924
 # BACK_TO_BACK_WEIGHT = 1
 # COMBO_WEIGHT = 1
-
+# heightWeight:79,bumpinessWeight:83,holesWeight:408,scoreWeight:823,
+# emptyLinesWeight:593,backToBackWeight:591,comboWeight:365,tetrisWeight:718,
+# perfectClearWeight:386,tSpinWeight:465,singleWeight:303,doubleWeight:545,
+# tripleWeight:679
 [score]
 
 [tuner]
 MAX_GAMES = 10
 MAX_MOVES = 300
-MAX_THREAD = 1
+MAX_THREAD = 8
 MAX_GENERATIONS = 100
 MAX_POPULATIONS = 100
 

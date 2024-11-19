@@ -27,6 +27,7 @@ struct Candidate {
     int32_t singleWeight;
     int32_t doubleWeight;
     int32_t tripleWeight;
+    int32_t highestWeight;
     int64_t fitness;
 };
 
@@ -47,6 +48,7 @@ public:
                   << ",singleWeight" << candidate.singleWeight
                   << ",doubleWeight" << candidate.doubleWeight
                   << ",tripleWeight" << candidate.tripleWeight
+                  << ",highestWeight" << candidate.highestWeight
                   << '\n';
     }
 
@@ -76,6 +78,7 @@ public:
         candidate.singleWeight = std::max(1, std::min(1000, candidate.singleWeight));
         candidate.doubleWeight = std::max(1, std::min(1000, candidate.doubleWeight));
         candidate.tripleWeight = std::max(1, std::min(1000, candidate.tripleWeight));
+        candidate.highestWeight = std::max(1, std::min(1000, candidate.highestWeight));
     }
 
     Candidate generateRandomCandidate() {
@@ -93,6 +96,7 @@ public:
                 .singleWeight = randomInteger(1, 1000),
                 .doubleWeight = randomInteger(1, 1000),
                 .tripleWeight = randomInteger(1, 1000),
+                .highestWeight = randomInteger(1, 1000),
         };
 //        normalize(candidate);
         return candidate;
@@ -107,7 +111,6 @@ public:
         } else {
             uint32_t totalThreads = MAX_THREAD;
             std::vector<std::thread> threads(totalThreads - 1);
-            int threadTask = candidates.size() / totalThreads;
             for (int i = 0; i < threads.size(); i++) {
                 threads[i] = std::thread([i, totalThreads, &candidates, numberOfGames, maxNumberOfMoves, this] {
                     for (int j = i; j < candidates.size(); j += totalThreads) {
@@ -117,6 +120,7 @@ public:
             }
             for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
                 threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
+                logFile << "Thread:" << MAX_THREAD << ", Task:" << i << " has been completed"  << std::flush;
             }
             for (auto &thread: threads) {
                 thread.join();
@@ -189,7 +193,8 @@ public:
                                                      coefficient2 * candidate2.doubleWeight),
                 .tripleWeight = static_cast<int32_t>(coefficient1 * candidate1.tripleWeight +
                                                      coefficient2 * candidate2.tripleWeight),
-
+                .highestWeight = static_cast<int32_t>(coefficient1 * candidate1.highestWeight +
+                                                      coefficient2 * candidate2.highestWeight),
 
         };
         normalize(candidate);
@@ -197,9 +202,9 @@ public:
     }
 
     void mutate(Candidate &candidate) {
-        auto quantity = randomInteger(-100, 100);
+        auto quantity = 0;
         for (int i = 0; i < 3; i++) {
-            switch (randomInteger(0, 12)) {
+            switch (randomInteger(0, 13)) {
                 case 0:
                     quantity = randomInteger(-candidate.heightWeight + 1, candidate.heightWeight);
                     candidate.heightWeight = std::max(candidate.heightWeight + quantity, 0);
@@ -252,6 +257,10 @@ public:
                     quantity = randomInteger(-candidate.tripleWeight + 1, candidate.tripleWeight);
                     candidate.tripleWeight = std::max(candidate.tripleWeight + quantity, 0);
                     break;
+                case 13:
+                    quantity = randomInteger(-candidate.highestWeight + 1, candidate.highestWeight);
+                    candidate.highestWeight = std::max(candidate.highestWeight + quantity, 0);
+                    break;
             }
         }
     }
@@ -274,7 +283,7 @@ public:
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
     void run() {
-        std::ofstream logFile("../log.txt", std::ios::app);
+        logFile = std::ofstream("../log.txt", std::ios::app);
         //TODO:: add concurrency
         std::vector<Candidate> candidates;
         // Initial population generation
@@ -317,19 +326,20 @@ public:
             logFile << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
             logFile << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
             logFile << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
-                      "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
-                      << candidates[0].holesWeight << ',' <<
-                      "scoreWeight:" << candidates[0].scoreWeight <<
-                      ",emptyLinesWeight:" << candidates[0].emptyLinesWeight <<
-                      ",backToBackWeight:" << candidates[0].backToBackWeight <<
-                      ",comboWeight:" << candidates[0].comboWeight <<
-                      ",tetrisWeight:" << candidates[0].tetrisWeight <<
-                        ",perfectClearWeight:" << candidates[0].perfectClearWeight <<
-                        ",tSpinWeight:" << candidates[0].tSpinWeight <<
-                        ",singleWeight:" << candidates[0].singleWeight <<
-                        ",doubleWeight:" << candidates[0].doubleWeight <<
-                        ",tripleWeight:" << candidates[0].tripleWeight <<
-                      "(" << count << ")\n" << std::flush;
+                    "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
+                    << candidates[0].holesWeight << ',' <<
+                    "scoreWeight:" << candidates[0].scoreWeight <<
+                    ",emptyLinesWeight:" << candidates[0].emptyLinesWeight <<
+                    ",backToBackWeight:" << candidates[0].backToBackWeight <<
+                    ",comboWeight:" << candidates[0].comboWeight <<
+                    ",tetrisWeight:" << candidates[0].tetrisWeight <<
+                    ",perfectClearWeight:" << candidates[0].perfectClearWeight <<
+                    ",tSpinWeight:" << candidates[0].tSpinWeight <<
+                    ",singleWeight:" << candidates[0].singleWeight <<
+                    ",doubleWeight:" << candidates[0].doubleWeight <<
+                    ",tripleWeight:" << candidates[0].tripleWeight <<
+                    ",highestWeight:" << candidates[0].highestWeight <<
+                    "(" << count << ")\n" << std::flush;
             count++;
         }
     };
@@ -341,13 +351,14 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
-
+    std::ofstream logFile;
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
                    candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
                    candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
-                   candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight);
+                   candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight,
+                   candidate.highestWeight);
         uint64_t totalScore = 0;
         int totalMovement = 0;
         for (int j = 0; j < numberOfGames; j++) {
@@ -376,35 +387,19 @@ private:
                                 std::cerr << "Hold is not the only movement\n";
                             }
                             utility::move(grid, workingPiece, secondMovement);
-//                            if (!utility::move(grid, workingPiece, secondMovement)) {
-////                                std::cerr << "Invalid movement1\n";
-////                                exit(-1);
-//                                flag = false;
-//                                temMovement = movement;
-//                            }
                         }
                     } else {
                         utility::move(grid, workingPiece, movement);
-//                        if (!utility::move(grid, workingPiece, movement)) {
-////                            std::cerr << "Invalid movement2;" << movement << ", ";
-////                            exit(-1);
-//                                flag = false;
-//                                temMovement = movement;
-//                        }
                     }
                 }
                 if (!workingPiece.empty()) {
                     utility::insertBlock(grid, workingPiece);
                     score += utility::getScore(grid, workingPiece);
                 }
-//                if (!flag && !grid.exceed()) {
-//                    std::cerr << "Invalid movement2;" << temMovement << ", ";
-//                }
             }
             totalMovement += numberOfMoves;
             totalScore += score;
         }
-//        std::cerr << "totalMovement:" << totalMovement << '\n';
         candidate.fitness = totalScore;
     }
 

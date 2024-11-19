@@ -244,3 +244,18 @@ bool Grid::hold(Block& block) {
     holdBlock = Block(block.getType());
     block = Block(temType);
 }
+
+//TODO::utilize lock delay
+int Grid::highest() const {
+    int highest = 0;
+    for (int column = 0; column < columnSize; column++) {
+        int highestLine = 0;
+        for (int row = 0; row < rowSize; row++) {
+            if (grid[column][row]) highestLine = row + 1;
+        }
+        highest = std::max(highestLine, highest);
+    }
+    if (highest <= 15) return 0;
+    else if (highest == 16) return 5;
+    else return 100;
+}
