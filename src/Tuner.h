@@ -120,7 +120,6 @@ public:
             }
             for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
                 threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
-                logFile << "Thread:" << MAX_THREAD << ", Task:" << i << " has been completed\n"  << std::flush;
             }
             for (auto &thread: threads) {
                 thread.join();
@@ -351,6 +350,8 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
+    std::mutex mu;
+    int taskCount = 0;
     std::ofstream logFile;
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
@@ -401,6 +402,10 @@ private:
             totalScore += score;
         }
         candidate.fitness = totalScore;
+        mu.lock();
+        taskCount ++;
+        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << std::flush;
+        mu.unlock();
     }
 
     int randomInteger(int min, int max) {
