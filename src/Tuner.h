@@ -404,7 +404,7 @@ private:
         candidate.fitness = totalScore;
         mu.lock();
         taskCount ++;
-        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << std::flush;
+        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << '\n' << std::flush;
         mu.unlock();
     }
 
