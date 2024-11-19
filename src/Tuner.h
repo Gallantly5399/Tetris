@@ -120,7 +120,7 @@ public:
             }
             for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
                 threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
-                logFile << "Thread:" << MAX_THREAD << ", Task:" << i << " has been completed"  << std::flush;
+                logFile << "Thread:" << MAX_THREAD << ", Task:" << i << " has been completed\n"  << std::flush;
             }
             for (auto &thread: threads) {
                 thread.join();
