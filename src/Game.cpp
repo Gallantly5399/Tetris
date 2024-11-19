@@ -114,24 +114,8 @@ void Game::processEvents() {
         } else {
             bool state = utility::move(grid, block, movement);
             if (isTouchedGround && state) lockDelayTime = 0;
-//            if (!state) {
-//                std::cout << 1 << '\n';
-//            }
         }
     }
-//    if (HORIZONTAL_MOVEMENT != 0) movementCount ++;
-//    else movementCount = 0;
-//    if (movementCount % MOVEMENT_SENSITIVITY == 0) {
-//        if (HORIZONTAL_MOVEMENT == 1) {
-//            bool state = utility::moveRight(grid,block);
-//            if (isTouchedGround && state) movement++, lockDelayTime = 0;
-//            std::cerr << 1 << '\n';
-//        } else if (HORIZONTAL_MOVEMENT == -1) {
-//            bool state = utility::moveLeft(grid,block);
-//            if (isTouchedGround && state) movement++, lockDelayTime = 0;
-//            std::cerr << 2 << '\n';
-//        }
-//    }
 }
 
 void Game::tick() {
@@ -153,23 +137,13 @@ void Game::tick() {
     Block transparentBlock = block.getTransparentBlock();
     while (utility::moveDown(grid,transparentBlock));
     sendBlocks();
-//    if (firstBlock && isAiActive) {
-//        firstBlock = false;
-//        std::vector<Block> workingPieces{block};
-//        for (const auto &i: generator.seeNextBlocks(AI_SEE_NEXT)) {
-//            workingPieces.push_back(i);
-//        }
-//        ai.add(workingPieces, grid);
-//        aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-//                std::chrono::system_clock::now().time_since_epoch()).count();
-//    }
-
 
     //TODO::integrate AI movements into Events
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     long long durationTime = currentTime - aiLastMoveTime;
     for (int count = 1; count * 1000 <= durationTime * MAX_AI_MOVEMENTS_PER_SECOND && !aiMovement.empty(); count++) {
+        if (aiLastMovement == Movement::softDrop && !utility::touch(grid, block)) break;
         const Movement &currentMovement = aiMovement.read();
         if (currentMovement == Movement::Rotate) {
             utility::rotate(grid, block);
@@ -184,8 +158,13 @@ void Game::tick() {
             isHardDrop = true;
         } else if (currentMovement == Movement::Hold) {
             hold();
+        } else if (currentMovement == Movement::softDrop) {
+            std::cout << 1 << ' ' << __LINE__ << '\n';
+            gravity.setSoftDrop();
         }
+        aiLastMovement = currentMovement;
         aiLastMoveTime = currentTime;
+        if (aiLastMovement == Movement::softDrop) break;
     }
 
     if (isHardDrop) { while (utility::moveDown(grid,block)); }
@@ -194,7 +173,7 @@ void Game::tick() {
         if (isLockDelay && !isHardDrop) {
             if (isTouchedGround) {
                 lockDelayTime += passedTime;
-                if (lockDelayTime >= 0.5 || movement >= 10) {
+                if (lockDelayTime >= 0.5 || movementCount >= 10) {
                     insertBlock();
                     lastScoreType = addScore();
                     grid.holdable = true;
@@ -204,7 +183,7 @@ void Game::tick() {
                         block = generator.nextBlock();
                     }
                     gravity.unsetSoftDrop();
-                    lockDelayTime = movement = 0;
+                    lockDelayTime = movementCount = 0;
 
                 }
             } else {
@@ -224,7 +203,7 @@ void Game::tick() {
         }
     } else {
         isTouchedGround = false;
-        movement = 0;
+        movementCount = 0;
     }
 
 
@@ -385,3 +364,4 @@ void Game::parseConfig() {
     MAX_RENDER_FRAMES = config["game"]["MAX_RENDER_FRAMES"].value_or<uint32_t>(60);
     MAX_AI_MOVEMENTS_PER_SECOND = config["ai"]["MAX_AI_MOVEMENTS_PER_SECOND"].value_or<uint32_t>(100);
 }
+

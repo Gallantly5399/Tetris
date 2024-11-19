@@ -3,6 +3,8 @@ project(Tetris)
 
 set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(dependencies/fmt)
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
 
 find_package(SFML COMPONENTS system window graphics network audio REQUIRED)
 include_directories(${SFML_INCLUDE_DIRS} dependencies/tomlplusplus/include dependencies/fmt/include)

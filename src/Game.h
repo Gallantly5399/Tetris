@@ -34,7 +34,6 @@ private:
     std::pair<int, int> mousePositionToGridPosition(float x, float y);
     void processEvents();
     bool isTouchedGround = false;
-    uint32_t movement = 0;
     bool isRunning = true;
     bool isLockDelay = true;
     double lockDelayTime = 0;
@@ -52,7 +51,7 @@ private:
     int currentLogicFrame = 0;
     //1.5 times for difficult score
     bool backToBack = false;
-
+    Movement aiLastMovement = Movement::None;
     AI ai;
     int comboCount = 0;
     ScoreType lastScoreType = ScoreType::None;

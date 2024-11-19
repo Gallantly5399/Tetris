@@ -19,6 +19,8 @@ enum class Movement {
     RotateCounterClockwise,
     Hold,
     HardDrop,
+    softDrop,
+    None,
 };
 
 //column first vector

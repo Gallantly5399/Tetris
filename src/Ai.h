@@ -47,6 +47,7 @@ struct MovementData {
 
 class AI {
 public:
+
     struct Candidate {
         int64_t score; //score for the grid
         std::vector<Movement> movements; //movements for the first block
@@ -145,7 +146,6 @@ public:
         for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
             for (auto &[score, movements, workingGrid, _bestBlock_nouse]: candidates) {
                 //TODO::add soft drop
-                //TODO::add hold
                 const Block &workingPiece = workingPieces[workingIndex];
                 Grid temGrid = workingGrid;
                 if (temGrid.holdable) {
@@ -183,7 +183,8 @@ public:
         int64_t currentScore =
                 (int64_t) -heightWeight * grid.aggregateHeight() - holesWeight * grid.holes()
                 - bumpinessWeight * grid.bumpiness() + emptyLineWeight * grid.sumOfContinuousEmptyLines()
-                + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount + tetrisWeight * (scoreType == ScoreType::Tetris)
+                + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount +
+                tetrisWeight * (scoreType == ScoreType::Tetris)
                 + tSpinWeight * utility::isTspin(scoreType) + perfectClearWeight * utility::isPerfectClear(scoreType)
                 - singleWeight * (scoreType == ScoreType::Single) - doubleWeight * (scoreType == ScoreType::Double)
                 + tripleWeight * (scoreType == ScoreType::Triple)
@@ -203,7 +204,8 @@ private:
     ///block is the block to be inserted
     ///candidates is the vector to store the candidates
     void
-    search(const Grid &grid, const Block &block, std::vector<Candidate> &candidates, std::vector<Movement> bestMovement,
+    search(const Grid &grid, const Block &block, std::vector<Candidate> &candidates,
+           const std::vector<Movement> &bestMovement,
            bool record = false) const {
         for (int rotation = 0; rotation < 4; rotation++) {
             std::vector<Movement> movements;
@@ -229,7 +231,20 @@ private:
                 if (isStop) return;
                 Block _pieceSet = _piece;
                 while (utility::moveDown(grid, _pieceSet));
+                Block temBlockRotate = _pieceSet;
+                Block temBlockRotateCounterClockwise = _pieceSet;
+                for (int i = 0; i < 3;i ++) {
+                    temBlockRotate = move(grid, temBlockRotate, candidates, movements, Movement::Rotate, record);
+                    temBlockRotateCounterClockwise = move(grid, temBlockRotateCounterClockwise, candidates, movements, Movement::RotateCounterClockwise, record);
+                }
 
+                //multiple choice
+                //1.harddrop
+                //2.left && up is not empty
+                //3.right && up is not empty
+                //4.rotate && srs
+
+                //harddrop
                 Grid _grid = grid;
                 utility::insertBlock(_grid, _pieceSet);
 
@@ -243,6 +258,25 @@ private:
             } while (utility::moveRight(grid, _piece));
         }
     }
+    Block move(const Grid &_grid, const Block &_block, std::vector<Candidate> &candidates, const std::vector<Movement> &_movements, Movement movement, bool record) const {
+        if (_block.empty()) return Block{};
+        Block block = _block;
+        Grid grid = _grid;
+        if (!utility::move(grid, block, movement) || utility::touch(grid, block)) return Block{};
+        if ((movement == Movement::Rotate || movement == Movement::RotateCounterClockwise) && !block.srs) return Block{};
+        std::vector<Movement> movements = _movements;
+        movements.push_back(Movement::softDrop);
+        movements.push_back(movement);
+        utility::insertBlock(grid, block);
+        int64_t currentScore = evaluate(grid);
+        if (record) candidates.emplace_back(currentScore, grid, movements);
+        else candidates.emplace_back(currentScore, grid, _movements);
+        return block;
+    }
+    //1.harddrop
+    //2.left && up is not empty
+    //3.right && up is not empty
+    //4.rotate && srs
 
     std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
     bool isStop = false;

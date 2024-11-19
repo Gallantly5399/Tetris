@@ -20,13 +20,13 @@ int main() {
 //    UI ui{};
 
 //    Game game{};
-    Tuner tuner{};
-    tuner.run();
+//    Tuner tuner{};
+//    tuner.run();
 //    tuner.runForPreview();
-//    Game game{};
-//    while(!game.shouldClose()) {
-//        game.run();
-//    }
+    Game game{};
+    while(!game.shouldClose()) {
+        game.run();
+    }
 
 }
 

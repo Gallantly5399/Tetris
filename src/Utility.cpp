@@ -427,3 +427,19 @@ bool utility::isPerfectClear(ScoreType scoreType) {
     }
     return false;
 }
+
+bool utility::occupy(const Grid& grid, const Block& block) {
+    const auto& shape = block.getShape();
+    for (int column = 0; column < shape.size(); column++) {
+        for (int row = 0; row < shape.size(); row++) {
+            if (shape[column][row] == 1) {
+                for (int i = block.startRow + row + 1; i < grid.getHeight(); i++) {
+                    if (grid.isOccupied(i, block.startColumn + column)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
