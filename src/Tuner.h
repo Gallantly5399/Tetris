@@ -350,8 +350,8 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
-    std::mutex mu;
-    int taskCount = 0;
+//    std::mutex mu;
+//    int taskCount = 0;
     std::ofstream logFile;
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
@@ -402,10 +402,10 @@ private:
             totalScore += score;
         }
         candidate.fitness = totalScore;
-        mu.lock();
-        taskCount ++;
-        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << '\n' << std::flush;
-        mu.unlock();
+//        mu.lock();
+//        taskCount ++;
+//        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << '\n' << std::flush;
+//        mu.unlock();
     }
 
     int randomInteger(int min, int max) {
