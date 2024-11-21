@@ -5,6 +5,8 @@
 #include "Grid.h"
 #include <iostream>
 
+
+//TODO::bitset optimization
 bool Grid::isOccupied(int row, int column) const {
     if (row < 0 || row >= rowSize || column < 0 || column >= columnSize) return true;
     return grid[column][row];

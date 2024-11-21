@@ -39,7 +39,7 @@ struct Candidate {
 
 };
 
-std::ostream& operator<<(std::ostream& os, const Candidate& candidate) {
+std::ostream &operator<<(std::ostream &os, const Candidate &candidate) {
     os << "fitness:" << candidate.fitness
        << ",heightWeight:" << candidate.heightWeight
        << ",scoreWeight:" << candidate.scoreWeight
@@ -58,7 +58,10 @@ std::ostream& operator<<(std::ostream& os, const Candidate& candidate) {
        << ",movementWeight:" << candidate.movementWeight;
     return os;
 }
-template <> struct fmt::formatter<Candidate> : fmt::ostream_formatter {};
+
+template<>
+struct fmt::formatter<Candidate> : fmt::ostream_formatter {
+};
 
 class Tuner {
 public:
@@ -302,35 +305,36 @@ public:
         Max moves per round = 200
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
-    void serialize(const std::vector<Candidate>& candidates, int generation) {
+    void serialize(const std::vector<Candidate> &candidates, int generation) {
         auto table = toml::table{
                 {"Candidates", toml::table{}}
         };
-        table["Candidates"].as_table()->emplace("size", (int)candidates.size());
+        table["Candidates"].as_table()->emplace("size", (int) candidates.size());
         for (int i = 0; i < candidates.size(); i++) {
-            table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), toml::table{
-                    {"heightWeight", candidates[i].heightWeight},
-                    {"scoreWeight", candidates[i].scoreWeight},
-                    {"holesWeight", candidates[i].holesWeight},
-                    {"bumpinessWeight", candidates[i].bumpinessWeight},
-                    {"emptyLinesWeight", candidates[i].emptyLinesWeight},
-                    {"backToBackWeight", candidates[i].backToBackWeight},
-                    {"comboWeight", candidates[i].comboWeight},
-                    {"tetrisWeight", candidates[i].tetrisWeight},
-                    {"perfectClearWeight", candidates[i].perfectClearWeight},
-                    {"tSpinWeight", candidates[i].tSpinWeight},
-                    {"singleWeight", candidates[i].singleWeight},
-                    {"doubleWeight", candidates[i].doubleWeight},
-                    {"tripleWeight", candidates[i].tripleWeight},
-                    {"highestWeight", candidates[i].highestWeight},
-                    {"movementWeight", candidates[i].movementWeight},
-                    {"fitness", candidates[i].fitness}
-            });
+            auto candidateArray = toml::array{
+                    candidates[i].heightWeight,
+                    candidates[i].scoreWeight,
+                    candidates[i].holesWeight,
+                    candidates[i].bumpinessWeight,
+                    candidates[i].emptyLinesWeight,
+                    candidates[i].backToBackWeight,
+                    candidates[i].comboWeight,
+                    candidates[i].tetrisWeight,
+                    candidates[i].perfectClearWeight,
+                    candidates[i].tSpinWeight,
+                    candidates[i].singleWeight,
+                    candidates[i].doubleWeight,
+                    candidates[i].tripleWeight,
+                    candidates[i].highestWeight,
+                    candidates[i].movementWeight
+            };
+            table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), candidateArray);
         }
         std::ofstream file(fmt::format("../logs/AiTrainData_{}.toml", generation));
         file << table;
         file.close();
     }
+
     void run() {
         auto logger = spdlog::basic_logger_mt("AI_DATA", "../logs/AiTrainData.txt");
         //TODO:: add concurrency
@@ -347,7 +351,7 @@ public:
         });
         serialize(candidates, 0);
         int count = 0;
-        for (int generation = 1; generation <= MAX_GENERATIONS; generation ++) {
+        for (int generation = 1; generation <= MAX_GENERATIONS; generation++) {
             std::vector<Candidate> newCandidates;
             for (int i = 0; i < 30; i++) { // 30% of population
                 auto pair = tournamentSelectPair(candidates, 10); // 10% of population
@@ -367,7 +371,8 @@ public:
             for (int i = 0; i < candidates.size(); i++) {
                 totalFitness += candidates[i].fitness;
             }
-            logger->info("Average fitness = {}, Highest fitness = {} ({})\nFittest candidate = {}, ", 1.0 * totalFitness / candidates.size(), candidates[0].fitness, count, candidates[0]);
+            logger->info("Average fitness = {}, Highest fitness = {} ({})\nFittest candidate = {}, ",
+                         1.0 * totalFitness / candidates.size(), candidates[0].fitness, count, candidates[0]);
             serialize(candidates, generation);
             count++;
         }
@@ -380,8 +385,10 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
-    std::shared_ptr<spdlog::logger> logFile = spdlog::basic_logger_mt<spdlog::async_factory>("Tuner", "../logs/Tuner.txt");
-    std::shared_ptr<spdlog::logger> aiProcessLogger = spdlog::basic_logger_mt<spdlog::async_factory>("AI_PROCESS", "../logs/AiProcess.txt");
+    std::shared_ptr<spdlog::logger> logFile = spdlog::basic_logger_mt<spdlog::async_factory>("Tuner",
+                                                                                             "../logs/Tuner.txt");
+    std::shared_ptr<spdlog::logger> aiProcessLogger = spdlog::basic_logger_mt<spdlog::async_factory>("AI_PROCESS",
+                                                                                                     "../logs/AiProcess.txt");
 //    std::mutex mu;
 //    int taskCount = 0;
 
@@ -409,7 +416,7 @@ private:
                     workingPiece = holdBlock;
                     holdBlock = Block{};
                     isHoldBlock = false;
-                    numberOfMoves --;
+                    numberOfMoves--;
                 } else {
                     workingPiece = rpg.nextBlock();
                 }
@@ -446,7 +453,8 @@ private:
                     score += utility::getScore(grid, workingPiece);
                 }
             }
-            aiProcessLogger->info("Game Ended. TaskID:{} Game:{} completed. Score:{}; Total Movement:{};", index, j, score, numberOfMoves);
+            aiProcessLogger->info("Game Ended. TaskID:{} Game:{} completed. Score:{}; Total Movement:{};", index, j,
+                                  score, numberOfMoves);
             totalMovement += numberOfMoves;
             totalScore += score;
         }
