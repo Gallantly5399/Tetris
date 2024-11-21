@@ -330,7 +330,7 @@ public:
             };
             table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), candidateArray);
         }
-        std::ofstream file(fmt::format("../logs/AiTrainData_{}.toml", generation));
+        std::ofstream file(fmt::format("../logs/AiTrainData_Generation{}.toml", generation));
         file << table;
         file.close();
     }
