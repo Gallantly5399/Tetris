@@ -154,7 +154,7 @@ public:
         candidates.emplace_back(evaluateFirst(grid), grid, std::vector<Movement>{}, Block{});
         for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
             for (const auto &[score, _movements, workingGrid, _bestBlock]: candidates) {
-                //TODO::
+                //TODO::add movementWeight or check whether softDrop is meaningful
                 const Block &workingPiece = workingPieces[workingIndex];
                 Grid temGrid = workingGrid;
                 if (temGrid.holdable) {

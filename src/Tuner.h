@@ -16,6 +16,7 @@
 #include "spdlog/async.h"
 #include "spdlog/fmt/ostr.h"
 
+
 //TODO::modify linesWeight to scoreWeight
 struct Candidate {
     int32_t heightWeight;
@@ -72,6 +73,8 @@ public:
         MAX_POPULATIONS = config["tuner"]["MAX_POPULATIONS"].value_or(100);
         MAX_GENERATIONS = config["tuner"]["MAX_GENERATIONS"].value_or(1000);
         logFile->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [Thread:%t] [Line:%#] %v");
+        aiProcessLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [Thread:%t] %v");
+        spdlog::flush_every(std::chrono::seconds(5));
     }
 
     static void normalize(Candidate &candidate) {
@@ -327,7 +330,7 @@ public:
                 normalize(candidate);
                 newCandidates.push_back(candidate);
             }
-            logger->info("\"Computing fitnesses of new candidates. ({}).", count);
+            logger->info("Computing fitnesses of new candidates. ({}).", count);
             computeFitnesses(newCandidates, MAX_GAMES, MAX_MOVES);
             logger->info("Replacing the least 30% of the population with the new candidates. ({}).", count);
             deleteNLastReplacement(candidates, newCandidates);
@@ -351,6 +354,7 @@ private:
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
     std::shared_ptr<spdlog::logger> logFile = spdlog::basic_logger_mt<spdlog::async_factory>("Tuner", "../logs/Tuner.txt");
+    std::shared_ptr<spdlog::logger> aiProcessLogger = spdlog::basic_logger_mt<spdlog::async_factory>("AI_PROCESS", "../logs/AiProcess.txt");
 //    std::mutex mu;
 //    int taskCount = 0;
 
@@ -371,12 +375,14 @@ private:
             int numberOfMoves = 0;
             bool isHoldBlock = false;
             Block holdBlock{};
+            aiProcessLogger->info("Game Started. TaskID:{} Game:{};", index, j);
             while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
                 Block workingPiece{};
                 if (isHoldBlock) {
                     workingPiece = holdBlock;
                     holdBlock = Block{};
                     isHoldBlock = false;
+                    numberOfMoves --;
                 } else {
                     workingPiece = rpg.nextBlock();
                 }
@@ -413,9 +419,11 @@ private:
                     score += utility::getScore(grid, workingPiece);
                 }
             }
+            aiProcessLogger->info("Game Ended. TaskID:{} Game:{} completed. Score:{}; Total Movement:{};", index, j, score, numberOfMoves);
             totalMovement += numberOfMoves;
             totalScore += score;
         }
+        aiProcessLogger->info("TaskID:{} completed.", index);
         candidate.fitness = totalScore;
 //        mu.lock();
 //        taskCount ++;
