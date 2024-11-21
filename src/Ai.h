@@ -193,7 +193,7 @@ public:
             for (auto movement : bestMovement) {
                 if (movement == Movement::softDrop) {
                     while(utility::moveDown(grid, bestBlock));
-                    bestBlock.totalMovements += 10;
+                    bestBlock.totalMovements += 5;
                 } else {
                     utility::move(grid, bestBlock, movement);
                 }
@@ -319,6 +319,9 @@ public:
             return false;
         }
         if (!utility::touch(grid, block)) {
+            return false;
+        }
+        if (!utility::occupy(grid, block)) {
             return false;
         }
 //        if ((movement == Movement::Rotate || movement == Movement::RotateCounterClockwise) && !block.srs) return Block{};

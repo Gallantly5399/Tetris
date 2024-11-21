@@ -216,11 +216,11 @@ int Grid::sumOfContinuousEmptyLines() const {
         ans = std::max(ans, sum);
         preSum = sum;
     }
-    if (ans > 2) ans = 0;
+    static int map[] = {0, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0};
     if (uncontinuousEmptyLines >= 2) {
         return 0;
     }
-    return ans;
+    return map[ans];
 }
 
 bool Grid::empty() const {
