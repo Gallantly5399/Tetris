@@ -150,7 +150,7 @@ void Block::rotateCounterClockwise() {
 //    return *this;
 //}
 
-const std::vector<std::vector<int>>& Block::getShape() const {
+const std::vector<std::vector<int>> &Block::getShape() const {
     return shape;
 }
 
@@ -159,7 +159,7 @@ BlockPosition Block::getPosition() const {
 }
 
 
-sf::Color Block::getColor() const{
+sf::Color Block::getColor() const {
     return color;
 }
 
@@ -202,7 +202,7 @@ void Block::setStartColumn(int column) {
     startColumn = column;
 }
 
-bool Block::empty() const{
+bool Block::empty() const {
     if (type == BlockType::None) return true;
     return false;
 }
@@ -220,9 +220,46 @@ bool Block::getSrs() const {
 }
 
 
-
 int Block::getRotation() const {
     return rotation;
+}
+
+#include <iostream>
+bool Block::operator==(const Block &other) const {
+    if (type != other.type) {
+        std::cout << "type not equal\n";
+        return false;
+    }
+    if (startRow != other.startRow) {
+        std::cout << "startRow not equal\n";
+        return false;
+    }
+    if (startColumn != other.startColumn) {
+        std::cout << "startColumn not equal\n";
+        return false;
+    }
+    if (rotation != other.rotation) {
+        std::cout << "rotation not equal\n";
+        return false;
+    }
+
+    if (lastMovement != other.lastMovement) {
+        std::cout << "lastMovement not equal\n";
+        return false;
+    }
+    if (totalMovements != other.totalMovements) {
+        std::cout << "totalMovements not equal\n";
+        return false;
+    }
+    for (int i = 0;i < shape.size(); i++) {
+        for (int j = 0;j < shape[i].size(); j++) {
+            if (shape[i][j] != other.shape[i][j]) {
+                std::cout << "shape not equal\n";
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 std::ostream &operator<<(std::ostream &os, const Movement &movement) {
@@ -248,10 +285,20 @@ std::ostream &operator<<(std::ostream &os, const Movement &movement) {
         case Movement::HardDrop:
             os << "HardDrop";
             break;
+        case Movement::softDrop:
+            os << "SoftDrop";
+            break;
+        case Movement::None:
+            os << "None";
+            break;
+        case Movement::softDropEnd:
+            os << "SoftDropEnd";
+            break;
     }
     return os;
 
 }
+
 std::ostream &operator<<(std::ostream &os, const BlockType &blockType) {
     switch (blockType) {
         case BlockType::I:

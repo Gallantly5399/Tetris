@@ -11,6 +11,10 @@
 #include <toml++/toml.hpp>
 #include <filesystem>
 #include "Ai.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/async.h"
+#include "spdlog/fmt/ostr.h"
 
 //TODO::modify linesWeight to scoreWeight
 struct Candidate {
@@ -28,30 +32,35 @@ struct Candidate {
     int32_t doubleWeight;
     int32_t tripleWeight;
     int32_t highestWeight;
+    int32_t movementWeight;
     int64_t fitness;
+
+
 };
+
+std::ostream& operator<<(std::ostream& os, const Candidate& candidate) {
+    os << "fitness:" << candidate.fitness
+       << ",heightWeight:" << candidate.heightWeight
+       << ",scoreWeight:" << candidate.scoreWeight
+       << ",holesWeight:" << candidate.holesWeight
+       << ",bumpinessWeight:" << candidate.bumpinessWeight
+       << ",emptyLinesWeight:" << candidate.emptyLinesWeight
+       << ",backToBackWeight:" << candidate.backToBackWeight
+       << ",comboWeight:" << candidate.comboWeight
+       << ",tetrisWeight:" << candidate.tetrisWeight
+       << ",perfectClearWeight:" << candidate.perfectClearWeight
+       << ",tSpinWeight:" << candidate.tSpinWeight
+       << ",singleWeight:" << candidate.singleWeight
+       << ",doubleWeight:" << candidate.doubleWeight
+       << ",tripleWeight:" << candidate.tripleWeight
+       << ",highestWeight:" << candidate.highestWeight
+       << ",movementWeight:" << candidate.movementWeight;
+    return os;
+}
+template <> struct fmt::formatter<Candidate> : fmt::ostream_formatter {};
 
 class Tuner {
 public:
-    void output(const Candidate &candidate) {
-        std::cout << ",fitness:" << candidate.fitness
-                  << "heightWeight:" << candidate.heightWeight
-                  << ",linesWeight:" << candidate.scoreWeight
-                  << ",holesWeight:" << candidate.holesWeight
-                  << ",bumpinessWeight:" << candidate.bumpinessWeight
-                  << ",emptyLinesWeight:" << candidate.emptyLinesWeight
-                  << ",backToBackWeight:" << candidate.backToBackWeight
-                  << ",comboWeight" << candidate.comboWeight
-                  << ",tetrisWeight" << candidate.tetrisWeight
-                  << ",perfectClearWeight" << candidate.perfectClearWeight
-                  << ",tSpinWeight" << candidate.tSpinWeight
-                  << ",singleWeight" << candidate.singleWeight
-                  << ",doubleWeight" << candidate.doubleWeight
-                  << ",tripleWeight" << candidate.tripleWeight
-                  << ",highestWeight" << candidate.highestWeight
-                  << '\n';
-    }
-
     Tuner() {
         std::random_device rd;
         gen = std::mt19937(rd());
@@ -62,6 +71,7 @@ public:
         MAX_GAMES = config["tuner"]["MAX_GAMES"].value_or(10);
         MAX_POPULATIONS = config["tuner"]["MAX_POPULATIONS"].value_or(100);
         MAX_GENERATIONS = config["tuner"]["MAX_GENERATIONS"].value_or(1000);
+        logFile->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [Thread:%t] [Line:%#] %v");
     }
 
     static void normalize(Candidate &candidate) {
@@ -79,6 +89,7 @@ public:
         candidate.doubleWeight = std::max(1, std::min(1000, candidate.doubleWeight));
         candidate.tripleWeight = std::max(1, std::min(1000, candidate.tripleWeight));
         candidate.highestWeight = std::max(1, std::min(1000, candidate.highestWeight));
+        candidate.movementWeight = std::max(1, std::min(1000, candidate.movementWeight));
     }
 
     Candidate generateRandomCandidate() {
@@ -97,6 +108,7 @@ public:
                 .doubleWeight = randomInteger(1, 1000),
                 .tripleWeight = randomInteger(1, 1000),
                 .highestWeight = randomInteger(1, 1000),
+                .movementWeight = randomInteger(1, 1000),
         };
 //        normalize(candidate);
         return candidate;
@@ -194,6 +206,8 @@ public:
                                                      coefficient2 * candidate2.tripleWeight),
                 .highestWeight = static_cast<int32_t>(coefficient1 * candidate1.highestWeight +
                                                       coefficient2 * candidate2.highestWeight),
+                .movementWeight = static_cast<int32_t>(coefficient1 * candidate1.movementWeight +
+                                                       coefficient2 * candidate2.movementWeight),
 
         };
         normalize(candidate);
@@ -202,8 +216,8 @@ public:
 
     void mutate(Candidate &candidate) {
         auto quantity = 0;
-        for (int i = 0; i < 3; i++) {
-            switch (randomInteger(0, 13)) {
+        for (int i = 0; i < 4; i++) {
+            switch (randomInteger(0, 14)) {
                 case 0:
                     quantity = randomInteger(-candidate.heightWeight + 1, candidate.heightWeight);
                     candidate.heightWeight = std::max(candidate.heightWeight + quantity, 0);
@@ -260,6 +274,10 @@ public:
                     quantity = randomInteger(-candidate.highestWeight + 1, candidate.highestWeight);
                     candidate.highestWeight = std::max(candidate.highestWeight + quantity, 0);
                     break;
+                case 14:
+                    quantity = randomInteger(-candidate.movementWeight + 1, candidate.movementWeight);
+                    candidate.movementWeight = std::max(candidate.movementWeight + quantity, 0);
+                    break;
             }
         }
     }
@@ -282,14 +300,14 @@ public:
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
     void run() {
-        logFile = std::ofstream("../log.txt", std::ios::app);
+        auto logger = spdlog::basic_logger_mt("AI_DATA", "../logs/AiTrainData.txt");
         //TODO:: add concurrency
         std::vector<Candidate> candidates;
         // Initial population generation
         for (int i = 0; i < MAX_POPULATIONS; i++) {
             candidates.emplace_back(generateRandomCandidate());
         }
-        logFile << "Computing fitnesses of initial candidates.\n" << std::flush;
+        logger->info("Computing fitnesses of initial candidates.");
         //timer
         computeFitnesses(candidates, MAX_GAMES, MAX_MOVES);
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
@@ -309,11 +327,9 @@ public:
                 normalize(candidate);
                 newCandidates.push_back(candidate);
             }
-            logFile << "Computing fitnesses of new candidates. (" + std::to_string(count) + ")\n" << std::flush;
+            logger->info("\"Computing fitnesses of new candidates. ({}).", count);
             computeFitnesses(newCandidates, MAX_GAMES, MAX_MOVES);
-            logFile
-                    << "Replacing the least 30% of the population with the new candidates. (" + std::to_string(count) +
-                       ")\n" << std::flush;
+            logger->info("Replacing the least 30% of the population with the new candidates. ({}).", count);
             deleteNLastReplacement(candidates, newCandidates);
             int totalFitness = 0;
             for (int i = 0; i < candidates.size(); i++) {
@@ -322,23 +338,7 @@ public:
 
             //TODO::reflection
             //TODO::write to file
-            logFile << "Average fitness = " << 1.0 * totalFitness / candidates.size() << '\n';
-            logFile << "Highest fitness = " << candidates[0].fitness << "(" << count << ")\n";
-            logFile << "Fittest candidate = " << "heightWeight:" << candidates[0].heightWeight << ',' <<
-                    "bumpinessWeight:" << candidates[0].bumpinessWeight << ',' << "holesWeight:"
-                    << candidates[0].holesWeight << ',' <<
-                    "scoreWeight:" << candidates[0].scoreWeight <<
-                    ",emptyLinesWeight:" << candidates[0].emptyLinesWeight <<
-                    ",backToBackWeight:" << candidates[0].backToBackWeight <<
-                    ",comboWeight:" << candidates[0].comboWeight <<
-                    ",tetrisWeight:" << candidates[0].tetrisWeight <<
-                    ",perfectClearWeight:" << candidates[0].perfectClearWeight <<
-                    ",tSpinWeight:" << candidates[0].tSpinWeight <<
-                    ",singleWeight:" << candidates[0].singleWeight <<
-                    ",doubleWeight:" << candidates[0].doubleWeight <<
-                    ",tripleWeight:" << candidates[0].tripleWeight <<
-                    ",highestWeight:" << candidates[0].highestWeight <<
-                    "(" << count << ")\n" << std::flush;
+            logger->info("Average fitness = {}, Highest fitness = {} ({})\nFittest candidate = {}, ", 1.0 * totalFitness / candidates.size(), candidates[0].fitness, count, candidates[0]);
             count++;
         }
     };
@@ -350,16 +350,17 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
+    std::shared_ptr<spdlog::logger> logFile = spdlog::basic_logger_mt<spdlog::async_factory>("Tuner", "../logs/Tuner.txt");
 //    std::mutex mu;
 //    int taskCount = 0;
-    std::ofstream logFile;
+
     void threadRun(std::vector<Candidate> &candidates, int numberOfGames, int maxNumberOfMoves, int index) {
         Candidate &candidate = candidates[index];
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
                    candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
                    candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
                    candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight,
-                   candidate.highestWeight);
+                   candidate.highestWeight, candidate.movementWeight);
         uint64_t totalScore = 0;
         int totalMovement = 0;
         for (int j = 0; j < numberOfGames; j++) {
@@ -368,27 +369,41 @@ private:
 
             uint64_t score = 0;
             int numberOfMoves = 0;
+            bool isHoldBlock = false;
+            Block holdBlock{};
             while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
-                Block workingPiece = rpg.nextBlock();
+                Block workingPiece{};
+                if (isHoldBlock) {
+                    workingPiece = holdBlock;
+                    holdBlock = Block{};
+                    isHoldBlock = false;
+                } else {
+                    workingPiece = rpg.nextBlock();
+                }
                 std::vector<Block> workingPieces = {workingPiece};
                 for (const auto &piece: rpg.seeNextBlocks(9)) workingPieces.push_back(piece);
-                auto [_nouse, movements, _grid_nouse_1, _dmakd] = ai.best_(grid, workingPieces);
+                auto [_nouse, movements, _grid_nouse_1, _bestBlock] = ai.best_(grid, workingPieces);
                 //TODO::move
                 for (auto movement: movements) {
                     if (movement == Movement::Hold) {
                         if (movements.size() != 1) {
-                            //TODO::Log
-                            std::cerr << "Hold is not the only movement\n";
+                            logFile->debug("Hold is not the only movement");
                         }
                         grid.hold(workingPiece);
                         if (workingPiece.empty()) continue;
-                        auto [_score_nouse, secondMovements, _grid_nouse_2, _aisdjas] = ai.best_(grid, workingPieces);
-                        for (auto secondMovement: secondMovements) {
-                            if (secondMovement == Movement::Hold) { //TODO::Log
-                                std::cerr << "Hold is not the only movement\n";
-                            }
-                            utility::move(grid, workingPiece, secondMovement);
-                        }
+                        isHoldBlock = true;
+                        holdBlock = workingPiece;
+                        continue;
+//                        auto [_score_nouse, secondMovements, _grid_nouse_2, _aisdjas] = ai.best_(grid, workingPieces);
+//                        for (auto secondMovement: secondMovements) {
+//                            if (secondMovement == Movement::Hold) {
+//                                logFile->debug("Hold is not the only movement");
+//                            }
+//                            utility::move(grid, workingPiece, secondMovement);
+//                        }
+                    } else if (movement == Movement::softDrop) {
+                        workingPiece.totalMovements += 10;
+                        utility::move(grid, workingPiece, Movement::Down);
                     } else {
                         utility::move(grid, workingPiece, movement);
                     }

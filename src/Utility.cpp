@@ -258,6 +258,7 @@ bool utility::rotate(const Grid &grid, Block &block) {
             block.startColumn -= offsets[k].first;
             block.rotate();
             block.lastMovement = Movement::Rotate;
+            block.totalMovements ++;
             return true;
         }
     }
@@ -268,6 +269,7 @@ bool utility::moveLeft(const Grid &grid, Block &block) {
     if (!isValid(block.startRow, block.startColumn - 1, grid, block)) return false;
     block.lastMovement = Movement::Left;
     block.startColumn -= 1;
+    block.totalMovements ++;
     return true;
 }
 
@@ -287,6 +289,7 @@ bool utility::moveRight(const Grid &grid, Block &block) {
     if (!isValid(block.startRow, block.startColumn + 1, grid, block)) return false;
     block.lastMovement = Movement::Right;
     block.startColumn += 1;
+    block.totalMovements ++;
     return true;
 }
 
@@ -347,7 +350,8 @@ bool utility::rotateCounterClockwise(const Grid &grid, Block &block) {
             else block.srs = false;
             block.startRow -= offsets[k].second;
             block.startColumn -= offsets[k].first;
-            block.lastMovement = Movement::Rotate;
+            block.totalMovements ++;
+            block.lastMovement = Movement::RotateCounterClockwise;
             block.rotateCounterClockwise();
             return true;
         }
@@ -379,7 +383,12 @@ bool utility::move(const Grid &grid, Block &block, const Movement &movements) {
             while (moveDown(grid, block));
             return true;
             break;
-
+        case Movement::softDrop:
+            break;
+        case Movement::softDropEnd:
+            break;
+        case Movement::None:
+            break;
     }
     return false;
 }

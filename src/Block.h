@@ -20,6 +20,7 @@ enum class Movement {
     Hold,
     HardDrop,
     softDrop,
+    softDropEnd,
     None,
 };
 
@@ -78,6 +79,8 @@ public:
     Block(Block&& block) noexcept = default;
     //Move assignment
     Block& operator=(Block&& block) noexcept = default;
+    //operator<=>(const Block&) const = default;
+    bool operator==(const Block& other) const;
     //return shape
     const std::vector<std::vector<int>>& getShape() const;
     sf::Color getColor() const;
@@ -93,6 +96,7 @@ public:
 
 //private:
     //just rotate in the local coordinate
+    uint32_t totalMovements = 0;
     std::vector<std::vector<int>> shape;
     BlockType type;
     sf::Color color;
@@ -102,6 +106,6 @@ public:
     int columnSize = 0;
     bool srs = false;
     unsigned int rotation = 0;
-    Movement lastMovement;
+    Movement lastMovement = Movement::None;
     bool isNotSent = true;
 };

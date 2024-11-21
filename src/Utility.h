@@ -5,6 +5,7 @@
 #pragma once
 #include "Grid.h"
 #include "Block.h"
+//TODO:: add message system
 enum class ScoreType {
     None = 0,
     Single,
@@ -26,9 +27,41 @@ enum class ScoreType {
     BackToBackTetrisPerfectClear,
 };
 
+enum class Message {
+    BlockTouchGround,
+};
+struct MessageData {
+    std::vector<Message> data;
+    int readIndex = 0;
+    int writeIndex = 0;
+
+    void write(Message message) {
+        data[writeIndex] = message;
+        writeIndex++;
+        if (writeIndex == data.size()) writeIndex = 0;
+    }
+
+    [[nodiscard]] Message read() {
+        auto message = data[readIndex];
+        readIndex++;
+        if (readIndex == data.size()) readIndex = 0;
+        return message;
+    }
+
+    void clear() {
+        readIndex = 0;
+        writeIndex = 0;
+    }
+
+    [[nodiscard]] bool empty() const {
+        return readIndex == writeIndex;
+    }
+};
+
+
+//TODO:: srs judge maybe is not correct
 namespace utility {
     static void insertBlock(Grid &grid, const Block &block) {
-
         grid.lastBlock = block;
         const auto &shape = block.getShape();
         const auto &color = block.getColor();

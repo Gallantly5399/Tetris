@@ -64,7 +64,11 @@ private:
     static bool isDifficultScore(const ScoreType& scoreType);
     void parseConfig();
     void sendBlocks();
+    void sendMessage(Message message);
     MovementData aiMovement;
+    MessageData aiMessage;
+    std::queue<Block> checkQueue;
+
     bool firstBlock = false;
     long long aiLastMoveTime = 0;
 //    std::thread aiThread;
@@ -72,10 +76,13 @@ private:
     uint32_t MAX_LOGIC_FRAMES = 20;
     uint32_t MAX_RENDER_FRAMES = 60;
     uint32_t MAX_AI_MOVEMENTS_PER_SECOND = 10;
+    bool NO_GRAVITY = false;
     uint32_t HORIZONTAL_MOVEMENT = 0;
     uint32_t MOVEMENT_SENSITIVITY = 2;
     uint32_t movementCount = 0;
     uint32_t logicFrameCount = 0;
     uint32_t renderFrameCount = 0;
+    Block bestBlock = Block{};
     std::filesystem::path projectPath = FILE_LOCATION;
+    std::queue<Movement> movements;
 };

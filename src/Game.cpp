@@ -5,6 +5,7 @@
 #include "Game.h"
 #include <toml++/toml.hpp>
 #include <cassert>
+
 const int AI_SEE_NEXT = 9;
 const uint32_t comboScores[] = {0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5};
 
@@ -17,8 +18,11 @@ void Game::sendBlocks() {
         }
         ai.add(workingPieces, grid);
         block.isNotSent = false;
+        aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
     };
 }
+
 void Game::insertBlock() {
     const auto &shape = block.getShape();
     const auto &color = block.getColor();
@@ -40,7 +44,10 @@ void Game::insertBlock() {
 void Game::processEvents() {
     sf::Event event{};
     sf::RenderWindow &window = ui.getWindow();
-    std::vector<Movement> movements;
+
+    while (!aiMovement.empty()) {
+        movements.push(aiMovement.read());
+    }
     while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed)
             window.close();
@@ -53,35 +60,40 @@ void Game::processEvents() {
                 window.close();
             }
             if (isAiActive) return;
+            if (event.key.scancode == sf::Keyboard::Scan::U) {
+            }
             if (event.key.scancode == sf::Keyboard::Scan::W) { //right rotate
-                movements.push_back(Movement::Rotate);
+                movements.push(Movement::Rotate);
 //                bool state = utility::rotate(grid, block);
 //
 //                if (isTouchedGround && state) movement++, lockDelayTime = 0;
                 //rotate the block
             } else if (event.key.scancode == sf::Keyboard::Scan::A) {
-                movements.push_back(Movement::Left);
+                movements.push(Movement::Left);
 //                HORIZONTAL_MOVEMENT = -1;
 //                bool state = utility::moveLeft(grid, block);
 //                if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::D) {
-                movements.push_back(Movement::Right);
+                movements.push(Movement::Right);
 //                HORIZONTAL_MOVEMENT = 1;
 //                bool state = utility::moveRight(grid,block);
 //                if (isTouchedGround && state) movement++, lockDelayTime = 0;
             } else if (event.key.scancode == sf::Keyboard::Scan::S) {
-                gravity.setSoftDrop();
+                movements.push(Movement::softDrop);
+//                gravity.setSoftDrop();
             } else if (event.key.scancode == sf::Keyboard::Scan::Space) {
-                movements.push_back(Movement::HardDrop);
+                movements.push(Movement::HardDrop);
 //                isHardDrop = true;
             } else if (event.key.scancode == sf::Keyboard::Scan::Q) {
-                movements.push_back(Movement::RotateCounterClockwise);
+                movements.push(Movement::RotateCounterClockwise);
 //                utility::rotateCounterClockwise(grid, block);
             } else if (event.key.scancode == sf::Keyboard::Scan::H) {
-                movements.push_back(Movement::Hold);
+                movements.push(Movement::Hold);
 //                hold();
             } else if (event.key.scancode == sf::Keyboard::Scan::P) {
                 restart();
+            } else if (event.key.scancode == sf::Keyboard::Scan::M) {
+                block = generator.nextBlock();
             }
         } else if (event.type == sf::Event::KeyReleased) {
             if (isAiActive) return;
@@ -101,21 +113,30 @@ void Game::processEvents() {
             }
         }
     }
-
-    for (auto movement: movements) {
+//    if (isAiActive) {
+    if (!movements.empty()) {
+        auto movement = movements.front();
+        movements.pop();
+//    }
+//    for (auto movement: movements) {
         if (movement == Movement::Hold) {
             grid.hold(block);
             if (block.empty()) {
                 block = generator.nextBlock();
-                continue;
+//            continue;
             }
         } else if (movement == Movement::HardDrop) {
             isHardDrop = true;
+        } else if (movement == Movement::softDrop) {
+            gravity.setSoftDrop();
+        } else if (movement == Movement::softDropEnd) {
+            gravity.unsetSoftDrop();
         } else {
             bool state = utility::move(grid, block, movement);
             if (isTouchedGround && state) lockDelayTime = 0;
         }
     }
+//    }
 }
 
 void Game::tick() {
@@ -126,7 +147,7 @@ void Game::tick() {
     double passedTime = clock.restart().asSeconds();
     time += passedTime;
     while (time >= gravity.getFallTime()) {
-        utility::moveDown(grid,block);
+        utility::moveDown(grid, block);
         if (gravity.softDrop()) {
             time = 0;
         } else {
@@ -135,46 +156,59 @@ void Game::tick() {
     }
 
     Block transparentBlock = block.getTransparentBlock();
-    while (utility::moveDown(grid,transparentBlock));
+    while (utility::moveDown(grid, transparentBlock));
     sendBlocks();
-
     //TODO::integrate AI movements into Events
-    long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-    long long durationTime = currentTime - aiLastMoveTime;
-    for (int count = 1; count * 1000 <= durationTime * MAX_AI_MOVEMENTS_PER_SECOND && !aiMovement.empty(); count++) {
-        if (aiLastMovement == Movement::softDrop && !utility::touch(grid, block)) break;
-        const Movement &currentMovement = aiMovement.read();
-        if (currentMovement == Movement::Rotate) {
-            utility::rotate(grid, block);
-        } else if (currentMovement == Movement::RotateCounterClockwise) {
-            utility::rotateCounterClockwise(grid, block);
-        } else if (currentMovement == Movement::Left) {
-            utility::moveLeft(grid,block);
-        } else if (currentMovement == Movement::Right) {
-            utility::moveRight(grid,block);
-        } else if (currentMovement == Movement::HardDrop) {
-            while (utility::moveDown(grid,block));
-            isHardDrop = true;
-        } else if (currentMovement == Movement::Hold) {
-            hold();
-        } else if (currentMovement == Movement::softDrop) {
-            std::cout << 1 << ' ' << __LINE__ << '\n';
-            gravity.setSoftDrop();
-        }
-        aiLastMovement = currentMovement;
-        aiLastMoveTime = currentTime;
-        if (aiLastMovement == Movement::softDrop) break;
-    }
+//    long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+//            std::chrono::system_clock::now().time_since_epoch()).count();
+//    long long durationTime = currentTime - aiLastMoveTime;
+//    for (int count = 1; count * 1000 <= durationTime * MAX_AI_MOVEMENTS_PER_SECOND && !aiMovement.empty(); count++) {
+//        if (block.lastMovement == Movement::softDrop && !utility::touch(grid, block)) {
+//            aiLastMoveTime = currentTime;
+//            break;
+//        }
+//        if (block.lastMovement == Movement::softDrop && utility::touch(grid, block)) {
+//            gravity.unsetSoftDrop();
+//        }
+//        const Movement &currentMovement = aiMovement.read();
+//        if (currentMovement == Movement::Rotate) {
+//            utility::rotate(grid, block);
+//        } else if (currentMovement == Movement::RotateCounterClockwise) {
+//            utility::rotateCounterClockwise(grid, block);
+//        } else if (currentMovement == Movement::Left) {
+//            utility::moveLeft(grid,block);
+//        } else if (currentMovement == Movement::Right) {
+//            utility::moveRight(grid,block);
+//        } else if (currentMovement == Movement::HardDrop) {
+//            while (utility::moveDown(grid,block));
+//            isHardDrop = true;
+//        } else if (currentMovement == Movement::Hold) {
+//            hold();
+//        } else if (currentMovement == Movement::softDrop) {
+//            gravity.setSoftDrop();
+//        }
+//        aiLastMoveTime = currentTime;
+//        if (block.lastMovement == Movement::softDrop) break;
+//    }
 
-    if (isHardDrop) { while (utility::moveDown(grid,block)); }
+    if (isHardDrop) { while (utility::moveDown(grid, block)); }
 
     if (utility::touch(grid, block)) {
+        sendMessage(Message::BlockTouchGround);
         if (isLockDelay && !isHardDrop) {
             if (isTouchedGround) {
                 lockDelayTime += passedTime;
                 if (lockDelayTime >= 0.5 || movementCount >= 10) {
-                    insertBlock();
+                    checkQueue.push(block);
+//                    std::cout << "Game: ";
+//                    std::cout << "rotation: " << block.rotation << ", ";
+////            std::cout << "type: " << bestBlock.type << ", ";
+//                    std::cout << "startRow: " << block.startRow << ", ";
+//                    std::cout << "startColumn: " << block.startColumn << ", ";
+////            std::cout << "lastMovement: " << bestBlock.lastMovement << ", ";
+////            std::cout << "totalMovements: " << bestBlock.totalMovements << '\n';
+//                    std::cout << '\n';
+                    utility::insertBlock(grid, block);
                     lastScoreType = addScore();
                     grid.holdable = true;
                     if (grid.exceed()) {
@@ -191,7 +225,8 @@ void Game::tick() {
                 isTouchedGround = true;
             }
         } else {
-            insertBlock();
+            utility::insertBlock(grid, block);
+            checkQueue.push(block);
             lastScoreType = addScore();
             grid.holdable = true;
             gravity.unsetSoftDrop();
@@ -215,7 +250,6 @@ void Game::hold() {
     if (grid.holdBlock.empty()) {
         grid.holdBlock = Block(block.getType());
         block = generator.nextBlock();
-//        std::cout << block.isNotSent << '\n';
         return;
     }
     BlockType temType = grid.holdBlock.getType();
@@ -246,20 +280,19 @@ bool Game::TSpin() const {
 }
 
 Game::Game() : block(BlockType::O), grid(10, 22), ui(), generator(), gravity(),
-               ai(79, 823, 408, 83,593 ,591, 365, 718, 386, 465, 303, 545, 679, 200) {
+//386 pc
+               ai(79, 823, 408, 83, 593, 591, 365, 718, 1000, 465, 303, 545, 679, 200, 100) {
     block = generator.nextBlock();
     aiLastMoveTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
     clock.restart();
-    aiMovement.data.resize(100);
+    aiMovement.data.resize(1000);
+    aiMessage.data.resize(1000);
     //TODO::add thread pool
-//    pool.enqueue([&]{
-    aiThread = std::thread([&] {
-        ai.best(aiMovement);
-    });
-
-
     parseConfig();
+    aiThread = std::thread([&] {
+        ai.best(aiMovement, aiMessage, checkQueue, bestBlock);
+    });
 
 
 }
@@ -288,6 +321,8 @@ void Game::restart() {
     comboCount = 0;
     clock.restart();
     aiMovement.clear();
+    aiMessage.clear();
+    while (!movements.empty()) movements.pop();
 }
 
 void Game::draw() {
@@ -295,8 +330,9 @@ void Game::draw() {
     ui.clear();
     if (!shouldStop()) {
         ui.drawBlock(block, 200, 25);
+//        if (!bestBlock.empty()) ui.drawBlock(bestBlock, 200, 25);
         Block transparentBlock = block.getTransparentBlock();
-        while (utility::moveDown(grid,transparentBlock));
+        while (utility::moveDown(grid, transparentBlock));
         ui.drawBlock(transparentBlock, 200, 25);
     }
     ui.drawLevel(gravity.getLevel());
@@ -363,5 +399,12 @@ void Game::parseConfig() {
     MAX_LOGIC_FRAMES = config["game"]["MAX_LOGIC_FRAMES"].value_or<uint32_t>(20);
     MAX_RENDER_FRAMES = config["game"]["MAX_RENDER_FRAMES"].value_or<uint32_t>(60);
     MAX_AI_MOVEMENTS_PER_SECOND = config["ai"]["MAX_AI_MOVEMENTS_PER_SECOND"].value_or<uint32_t>(100);
+    NO_GRAVITY = config["game"]["NO_GRAVITY"].value_or<bool>(false);
+    uint32_t PPS = config["ai"]["PPS"].value_or<uint32_t>(1);
+    ai.PPS = PPS;
+    if (NO_GRAVITY) gravity.setNoGravity();
 }
 
+void Game::sendMessage(Message message) {
+    aiMessage.write(message);
+}

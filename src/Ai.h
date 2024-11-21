@@ -13,6 +13,7 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
+#include <cassert>
 
 //TODO::Pack the movement data
 struct MovementData {
@@ -54,15 +55,14 @@ public:
         Grid grid;
         Block bestBlock;
 
-        Candidate(int64_t _score, const Grid &_grid, const std::vector<Movement> &_movements) : score(_score),
-                                                                                                grid(_grid),
-                                                                                                movements(_movements) {}
+        Candidate(int64_t _score, const Grid &_grid, const std::vector<Movement> &_movements, const Block& _bestBlock) : score(_score),
+                                                                                                grid(_grid), movements(_movements), bestBlock(_bestBlock) {}
 //        Candidate(double _score, const std::vector<Block>& _blocks, const Grid &_grid) : score(_score), grid(_grid), blocks(_blocks) {}
     };
-
     AI(int32_t heightWeight, int32_t scoreWeight, int32_t holesWeight, int32_t bumpinessWeight, int32_t emptyLineWeight,
        int32_t backToBackWeight, int32_t comboWeight, int32_t tetrisWeight, int32_t perfectClearWeight,
-       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight, int32_t highestWeight) {
+       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight, int32_t highestWeight,
+       int32_t movementWeight) {
         this->heightWeight = heightWeight;
         this->scoreWeight = scoreWeight;
         this->holesWeight = holesWeight;
@@ -78,55 +78,66 @@ public:
         this->tripleWeight = tripleWeight;
         this->tetrisWeight = tetrisWeight;
         this->highestWeight = highestWeight;
+        this->movementWeight = movementWeight;
     }
 
-    void best(MovementData &movements) {
+    void best(MovementData &movements, MessageData &messageData, std::queue<Block>& checkQueue, Block& gameBestBlock) {
         while (!isStop) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             if (blockQueue.empty()) continue;
+            auto lastTime = std::chrono::system_clock::now();
             auto [workingPieces, grid] = blockQueue.front();
             blockQueue.pop();
-            auto [bestScore, bestMovement, bestGrid, bestBlock] = this->best_(grid, workingPieces);
-            for (auto movement: bestMovement) {
-                movements.write(movement);
+            const auto& [bestScore, bestMovement, bestGrid, bestBlock] = this->best_(grid, workingPieces);
+//            assert(bestBlock.empty() == false);
+            gameBestBlock = bestBlock;
+//            std::cout << bestScore << '\n';
+//        for (auto movement : bestMovement) {
+//            std::cout << movement << '\n';
+//        }
+//
+//            std::cout << "AI: ";
+//            std::cout << "rotation: " << bestBlock.rotation << ", ";
+////            std::cout << "type: " << bestBlock.type << ", ";
+//            std::cout << "startRow: " << bestBlock.startRow << ", ";
+//            std::cout << "startColumn: " << bestBlock.startColumn << ", ";
+////            std::cout << "lastMovement: " << bestBlock.lastMovement << ", ";
+////            std::cout << "totalMovements: " << bestBlock.totalMovements << '\n';
+//            std::cout << '\n';
+
+            if (isStop) continue;
+            auto totalOperations = bestMovement.size();
+            double durationTime = 0.;
+            messageData.clear();
+            for (int i = 0;i < bestMovement.size();) {
+                durationTime += std::chrono::duration<double>(lastTime.time_since_epoch()).count(); //seconds
+                if (durationTime >= 1.0 / PPS / totalOperations) {
+                    durationTime -= 1.0 / PPS / totalOperations;
+                    auto movement = bestMovement[i ++];
+                    movements.write(movement);
+                    lastTime = std::chrono::system_clock::now();
+                    if (movement == Movement::softDrop) {
+                        //wait until touch ground message
+                        while (messageData.empty()) {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        }
+                        auto message = messageData.read();
+                        if (message == Message::BlockTouchGround) {
+                            movements.write(Movement::softDropEnd);
+                        }
+                    }
+                }
             }
-//            Block temBlock = workingPieces[0];
-//            Block bestBlock = bestBlocks[1];
-//            std::cout << "bestScore: " << bestScore << '\n';
-//
-//            if (bestBlock.getType() == BlockType::None) {
-//                movements.write(Movement::Down);
-//                continue;
+//            if (bestBlock.empty()) continue;
+//            while (checkQueue.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//            auto gameBlock = checkQueue.front();
+//            checkQueue.pop();
+//            if (gameBlock != bestBlock) {
+//                std::cout << gameBlock.type << ' ' << bestBlock.type << '\n';
+//                std::cout << "Game Block is not equal to best block\n";
+////                exit(-1);
 //            }
-//            if (bestMovement.size() == 1 && bestMovement[0] == Movement::Hold) {
-//                movements.write(Movement::Hold);
-//                continue;
-//            }
-//            int rotate_count = 0;
-//            while (temBlock.getRotation() != bestBlock.getRotation()) {
-//                rotate_count ++;
-//                utility::rotate(grid, temBlock);
-//            }
-//            Movement movement;
-//            if (rotate_count <= 2) {
-//                movement = Movement::Rotate;
-//            } else {
-//                rotate_count = 4 - rotate_count;
-//                movement = Movement::RotateCounterClockwise;
-//            }
-//            for (int i = 0;i < rotate_count; i++) {
-//
-//                movements.write(movement);
-//            }
-//
-//            auto [aiRow, aiColumn] = bestBlock.getPosition();
-//            auto [blockRow, blockColumn] = temBlock.getPosition();
-//            if (aiColumn > blockColumn) {
-//                for (int i = 0; i < aiColumn - blockColumn; i++) movements.write(Movement::Right);
-//            } else if (aiColumn < blockColumn) {
-//                for (int i = 0; i < blockColumn - aiColumn; i++) movements.write(Movement::Left);
-//            }
-//            movements.write(Movement::Down);
+////            assert(gameBlock == bestBlock);
         }
     }
 
@@ -136,43 +147,58 @@ public:
 
     void add(const std::vector<Block> &blocks, const Grid &grid) {
         blockQueue.emplace(blocks, grid);
-//        std::cout << "Add block to queue\n";
     }
-
     Candidate best_(const Grid &grid, const std::vector<Block> &workingPieces) {
         std::vector<Candidate> candidates, totalCandidates;
 
-        candidates.emplace_back(evaluateFirst(grid), grid, std::vector<Movement>{});
+        candidates.emplace_back(evaluateFirst(grid), grid, std::vector<Movement>{}, Block{});
         for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
-            for (auto &[score, movements, workingGrid, _bestBlock_nouse]: candidates) {
-                //TODO::add soft drop
+            for (const auto &[score, _movements, workingGrid, _bestBlock]: candidates) {
+                //TODO::
                 const Block &workingPiece = workingPieces[workingIndex];
                 Grid temGrid = workingGrid;
                 if (temGrid.holdable) {
+                    auto movements = _movements;
                     temGrid.holdable = false;
                     Block holdBlock = temGrid.holdBlock;
                     temGrid.holdBlock = workingPiece;
                     if (workingIndex == 0) {
+                        movements.clear();
                         movements.push_back(Movement::Hold);
                     }
                     if (holdBlock.empty()) {
-                        totalCandidates.push_back(Candidate(score, temGrid, movements));
-
+                        totalCandidates.push_back(Candidate(score, temGrid, movements, Block{}));
                     } else {
-                        search(temGrid, holdBlock, totalCandidates, movements);
+                        search(temGrid, holdBlock, totalCandidates, movements, _bestBlock, false,false);
                     }
                 }
-                search(workingGrid, workingPiece, totalCandidates, movements, workingIndex == 0);
+
+                search(workingGrid, workingPiece, totalCandidates, _movements, _bestBlock, workingIndex == 0, workingIndex == 0);
                 if (isStop) return candidates[0];
             }
             std::sort(totalCandidates.begin(), totalCandidates.end(), [](const Candidate &a, const Candidate &b) {
                 return a.score > b.score;
             });
             candidates.clear();
-            for (int i = 0; i < std::min(10, (int) totalCandidates.size()); i++) {
+            for (int i = 0; i < std::min(beamWidth, (uint32_t) totalCandidates.size()); i++) {
                 candidates.push_back(totalCandidates[i]);
+//                std::cout << totalCandidates[i].score << ' ';
             }
+//            std::cout << '\n';
             totalCandidates.clear();
+        }
+        const auto& bestMovement = candidates[0].movements;
+        if (bestMovement[0] != Movement::Hold) {
+            Block bestBlock = workingPieces[0];
+            for (auto movement : bestMovement) {
+                if (movement == Movement::softDrop) {
+                    while(utility::moveDown(grid, bestBlock));
+                    bestBlock.totalMovements += 10;
+                } else {
+                    utility::move(grid, bestBlock, movement);
+                }
+            }
+            candidates[0].bestBlock = bestBlock;
         }
         return candidates[0];
     }
@@ -188,7 +214,8 @@ public:
                 + tSpinWeight * utility::isTspin(scoreType) + perfectClearWeight * utility::isPerfectClear(scoreType)
                 - singleWeight * (scoreType == ScoreType::Single) - doubleWeight * (scoreType == ScoreType::Double)
                 + tripleWeight * (scoreType == ScoreType::Triple)
-                - highestWeight * grid.highest();
+                - highestWeight * grid.highest()
+                - movementWeight * grid.lastBlock.totalMovements;
         return currentScore;
     }
 
@@ -199,30 +226,33 @@ public:
         return score;
     }
 
-private:
+public:
     ///search for the best movement for the block
     ///block is the block to be inserted
     ///candidates is the vector to store the candidates
+
     void
     search(const Grid &grid, const Block &block, std::vector<Candidate> &candidates,
-           const std::vector<Movement> &bestMovement,
-           bool record = false) const {
+           const std::vector<Movement> &bestMovement, const Block& _bestBlock,
+           bool recordMovement = false, bool recordBestBlock = false) const {
         for (int rotation = 0; rotation < 4; rotation++) {
             std::vector<Movement> movements;
             Block _piece = block;
             if (rotation <= 2) {
                 for (int i = 0; i < rotation; i++) {
                     movements.push_back(Movement::Rotate);
+                    utility::rotate(grid, _piece);
                 }
             } else {
                 for (int i = 0; i < 4 - rotation; i++) {
                     movements.push_back(Movement::RotateCounterClockwise);
+                    utility::rotateCounterClockwise(grid, _piece);
                 }
             }
-            for (int i = 0; i < rotation; i++) {
-                utility::rotate(grid, _piece);
-//                movements.push_back(Movement::Rotate);
-            }
+//            for (int i = 0; i < rotation; i++) {
+//                utility::rotate(grid, _piece);
+////                movements.push_back(Movement::Rotate);
+//            }
 
             while (utility::moveLeft(grid, _piece)) {
                 movements.push_back(Movement::Left);
@@ -231,12 +261,8 @@ private:
                 if (isStop) return;
                 Block _pieceSet = _piece;
                 while (utility::moveDown(grid, _pieceSet));
-                Block temBlockRotate = _pieceSet;
-                Block temBlockRotateCounterClockwise = _pieceSet;
-                for (int i = 0; i < 3;i ++) {
-                    temBlockRotate = move(grid, temBlockRotate, candidates, movements, Movement::Rotate, record);
-                    temBlockRotateCounterClockwise = move(grid, temBlockRotateCounterClockwise, candidates, movements, Movement::RotateCounterClockwise, record);
-                }
+                if (_pieceSet.getType() != BlockType::O)
+                    handleSoftDrop(grid, _pieceSet, candidates, movements, bestMovement, _bestBlock, recordMovement, recordBestBlock);
 
                 //multiple choice
                 //1.harddrop
@@ -251,27 +277,60 @@ private:
                 int64_t currentScore = evaluate(_grid);
                 auto temMovement = movements;
                 temMovement.push_back(Movement::HardDrop);
-                if (record) candidates.emplace_back(currentScore, _grid, temMovement);
-                else candidates.emplace_back(currentScore, _grid, bestMovement);
+                auto temBestBlock = _pieceSet;
+                if (recordBestBlock) temBestBlock = _bestBlock;
+                if (recordMovement) candidates.emplace_back(currentScore, _grid, temMovement, temBestBlock);
+                else candidates.emplace_back(currentScore, _grid, bestMovement, temBestBlock);
                 if (!movements.empty() && movements.back() == Movement::Left) movements.pop_back();
                 else movements.push_back(Movement::Right);
             } while (utility::moveRight(grid, _piece));
         }
     }
-    Block move(const Grid &_grid, const Block &_block, std::vector<Candidate> &candidates, const std::vector<Movement> &_movements, Movement movement, bool record) const {
-        if (_block.empty()) return Block{};
+    //TODO::FIXME soft drop error
+    void handleSoftDrop(const Grid& _grid, const Block& _block, std::vector<Candidate>& candidates, const std::vector<Movement>& _movements, const std::vector<Movement>& bestMovements, const Block& bestBlock,bool recordMovement, bool recordBestBlock) const{
+        Block temBlockRotate = _block;
+        std::vector<Movement> temMovementRotate = _movements;
+        temMovementRotate.push_back(Movement::softDrop);
+        temBlockRotate.totalMovements += 10;
+        int rotateCount = 3;
+        while(move(_grid, temBlockRotate, candidates, temMovementRotate, bestMovements, bestBlock, Movement::Rotate, recordMovement, recordBestBlock) && --rotateCount) {
+            temMovementRotate.push_back(Movement::Rotate);
+            if (!utility::rotate(_grid, temBlockRotate)) break;
+        }
+
+        Block temBlockRotateCounterClockwise = _block;
+        std::vector<Movement> temMovementRotateCounterClockwise = _movements;
+        temMovementRotateCounterClockwise.push_back(Movement::softDrop);
+        int rotateCounterClockwiseCount = 3;
+        temBlockRotateCounterClockwise.totalMovements += 10;
+
+        while(move(_grid, temBlockRotateCounterClockwise, candidates,  temMovementRotateCounterClockwise, bestMovements, bestBlock,
+                   Movement::RotateCounterClockwise, recordMovement, recordBestBlock) && -- rotateCounterClockwiseCount) {
+            temMovementRotateCounterClockwise.push_back(Movement::RotateCounterClockwise);
+            utility::rotateCounterClockwise(_grid, temBlockRotateCounterClockwise);
+        };
+    }
+    bool move(const Grid &_grid, const Block &_block, std::vector<Candidate> &candidates,
+              const std::vector<Movement> &_movements, const std::vector<Movement>& bestMovements, const Block& bestBlock,Movement movement, bool recordMovement, bool recordBestBlock) const {
+        if (_block.empty()) return false;
         Block block = _block;
         Grid grid = _grid;
-        if (!utility::move(grid, block, movement) || utility::touch(grid, block)) return Block{};
-        if ((movement == Movement::Rotate || movement == Movement::RotateCounterClockwise) && !block.srs) return Block{};
+        if (!utility::move(grid, block, movement)) {
+            return false;
+        }
+        if (!utility::touch(grid, block)) {
+            return false;
+        }
+//        if ((movement == Movement::Rotate || movement == Movement::RotateCounterClockwise) && !block.srs) return Block{};
         std::vector<Movement> movements = _movements;
-        movements.push_back(Movement::softDrop);
         movements.push_back(movement);
         utility::insertBlock(grid, block);
         int64_t currentScore = evaluate(grid);
-        if (record) candidates.emplace_back(currentScore, grid, movements);
-        else candidates.emplace_back(currentScore, grid, _movements);
-        return block;
+        auto temBestBlock = block;
+        if (recordBestBlock) temBestBlock = bestBlock;
+        if (recordMovement) { candidates.emplace_back(currentScore, grid, movements, temBestBlock); }
+        else candidates.emplace_back(currentScore, grid, bestMovements, temBestBlock);
+        return true;
     }
     //1.harddrop
     //2.left && up is not empty
@@ -280,6 +339,8 @@ private:
 
     std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
     bool isStop = false;
+    const uint32_t beamWidth = 10;
+    uint32_t PPS = 1;
     //millisecond time for per block
     int32_t heightWeight;
     int32_t scoreWeight;
@@ -295,4 +356,5 @@ private:
     int32_t doubleWeight;
     int32_t tripleWeight;
     int32_t highestWeight;
+    int32_t movementWeight;
 };
