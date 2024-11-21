@@ -302,6 +302,35 @@ public:
         Max moves per round = 200
         Theoretical fitness limit = 5 * 200 * 4 / 10 = 400
     */
+    void serialize(const std::vector<Candidate>& candidates, int generation) {
+        auto table = toml::table{
+                {"Candidates", toml::table{}}
+        };
+        table["Candidates"].as_table()->emplace("size", (int)candidates.size());
+        for (int i = 0; i < candidates.size(); i++) {
+            table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), toml::table{
+                    {"heightWeight", candidates[i].heightWeight},
+                    {"scoreWeight", candidates[i].scoreWeight},
+                    {"holesWeight", candidates[i].holesWeight},
+                    {"bumpinessWeight", candidates[i].bumpinessWeight},
+                    {"emptyLinesWeight", candidates[i].emptyLinesWeight},
+                    {"backToBackWeight", candidates[i].backToBackWeight},
+                    {"comboWeight", candidates[i].comboWeight},
+                    {"tetrisWeight", candidates[i].tetrisWeight},
+                    {"perfectClearWeight", candidates[i].perfectClearWeight},
+                    {"tSpinWeight", candidates[i].tSpinWeight},
+                    {"singleWeight", candidates[i].singleWeight},
+                    {"doubleWeight", candidates[i].doubleWeight},
+                    {"tripleWeight", candidates[i].tripleWeight},
+                    {"highestWeight", candidates[i].highestWeight},
+                    {"movementWeight", candidates[i].movementWeight},
+                    {"fitness", candidates[i].fitness}
+            });
+        }
+        std::ofstream file(fmt::format("../logs/AiTrainData_{}.toml", generation));
+        file << table;
+        file.close();
+    }
     void run() {
         auto logger = spdlog::basic_logger_mt("AI_DATA", "../logs/AiTrainData.txt");
         //TODO:: add concurrency
@@ -316,9 +345,9 @@ public:
         std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
             return a.fitness > b.fitness;
         });
-
+        serialize(candidates, 0);
         int count = 0;
-        for (int _ = 0; _ < MAX_GENERATIONS; _++) {
+        for (int generation = 1; generation <= MAX_GENERATIONS; generation ++) {
             std::vector<Candidate> newCandidates;
             for (int i = 0; i < 30; i++) { // 30% of population
                 auto pair = tournamentSelectPair(candidates, 10); // 10% of population
@@ -338,10 +367,8 @@ public:
             for (int i = 0; i < candidates.size(); i++) {
                 totalFitness += candidates[i].fitness;
             }
-
-            //TODO::reflection
-            //TODO::write to file
             logger->info("Average fitness = {}, Highest fitness = {} ({})\nFittest candidate = {}, ", 1.0 * totalFitness / candidates.size(), candidates[0].fitness, count, candidates[0]);
+            serialize(candidates, generation);
             count++;
         }
     };
