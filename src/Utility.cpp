@@ -96,7 +96,9 @@ uint32_t utility::getScore(Grid &grid, const Block &block) {
 }
 
 bool utility::TSpin(const Grid &grid, const Block &block) {
-    if (block.getType() != BlockType::T || block.getLastMovement() != Movement::Rotate) return false;
+    if (block.getType() != BlockType::T || (block.getLastMovement() != Movement::Rotate && block.getLastMovement() != Movement::RotateCounterClockwise)) {
+        return false;
+    }
     const auto &shape = block.getShape();
     auto [startRow, startColumn] = block.getPosition();
     int count = grid.isOccupied(startRow, startColumn) + grid.isOccupied(startRow + 2, startColumn) +
@@ -178,7 +180,7 @@ ScoreType utility::getScoreType(const Grid &grid, const Block &block) {
         }
     } else if (TSpin(grid, block)) {//T-spin
         //T-spin mini
-        if (isSrs || checkMiniTSpin(grid, block)) {
+        if (checkMiniTSpin(grid, block)) {
             if (lines == 0) scoreType = ScoreType::TSpinMiniNoLines;
             else if (lines == 1) scoreType = ScoreType::TSpinMiniSingle;
             else if (lines == 2) scoreType = ScoreType::TSpinMiniDouble;
@@ -452,3 +454,100 @@ bool utility::occupy(const Grid& grid, const Block& block) {
     }
     return false;
 }
+
+std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> utility::getTSpinHole(const Grid &grid) {
+    uint32_t halfTSpinDoubleHoles = 0, halfTSpinTripleHoles = 0, fullTSpinDoubleHoles = 0, fullTSpinTripleHoles = 0;
+    static std::array<int, 6> tSpinDouble = {1, 0, 1, 0, 0, 0};
+    static std::array<int, 12> tSpinTripleOne = {1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1};
+    static std::array<int, 12> tSpinTripleTwo = {1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1};
+    static std::array<int, 8> tSpinTripleOneJudge = {0, 0, 0, 1, 0, 0, 1, 1};
+    static std::array<int, 8> tSpinTripleTwoJudge = {1, 0, 0, 0, 1, 1, 0, 0};
+
+
+    for (int column = 1;column < grid.getWidth() - 1; column++) {
+        for (int row = 1;row < grid.getHeight() - 1;row ++) {
+            if (!grid.isOccupied(row, column)) {
+                //x is the current position
+                //0x0
+                //101
+                std::array<int, 6> t1;
+                int count = 0;
+                for (int i = row - 1; i <= row; i ++) {
+                    for (int j = column - 1;j <= column + 1;j ++) {
+                        t1[count++] = grid.isOccupied(i, j);
+                    }
+                }
+                //100    001
+                //0x0 or 0x0
+                //101    101
+                if (t1 == tSpinDouble) {
+                    if ((grid.isOccupied(row + 1, column - 1) && !grid.isOccupied(row + 1, column)  && !grid.isOccupied(row + 1, column + 1))
+                    ||  (!grid.isOccupied(row + 1, column - 1) && !grid.isOccupied(row + 1, column)  && grid.isOccupied(row + 1, column + 1))) {
+                        fullTSpinDoubleHoles ++;
+                    } else {
+                        halfTSpinDoubleHoles ++;
+                    }
+                }
+                //
+                //1101
+                //1x01
+                //1101
+                count = 0;
+                std::array<int, 12> t2;
+                for (int i = row - 1; i <= row + 1;i ++) {
+                    for (int j = column - 1; j <= column + 2; j ++) {
+                        t2[count ++] = grid.isOccupied(i, j);
+                    }
+                }
+                //0011
+                //0001
+                //1101
+                //1x01
+                //1101
+                count = 0;
+                if (t2 == tSpinTripleOne) {
+                    std::array<int, 8> tem;
+                    for (int i = row + 2; i <= row + 3; i ++) {
+                        for (int j = column - 1; j <= column + 2; j ++) {
+                            tem[count ++] = grid.isOccupied(i, j);
+                        }
+                    }
+                    if (tem == tSpinTripleOneJudge) {
+                        fullTSpinTripleHoles ++;
+                    } else {
+                        halfTSpinTripleHoles ++;
+                    }
+                }
+                count = 0;
+                for (int i = row - 1;i <= row + 1;i ++) {
+                    for (int j = column - 1;j <= column + 2;j ++) {
+                        t2[count ++] = grid.isOccupied(i, j);
+                    }
+                }
+                count = 0;
+                if (t2 == tSpinTripleTwo) {
+                    std::array<int, 8> tem;
+                    for (int i = row + 2; i <= row + 3;i ++) {
+                        for (int j = column - 1;j <= column + 2;j ++) {
+                            tem[count++] = grid.isOccupied(i, j);
+                        }
+                    }
+                    if (tem == tSpinTripleTwoJudge) {
+                        fullTSpinTripleHoles ++;
+                    } else {
+                        halfTSpinTripleHoles ++;
+                    }
+                }
+                //1100
+                //1000
+                //1011
+                //1x01
+                //1011
+
+            }
+        }
+    }
+
+    return {halfTSpinDoubleHoles, fullTSpinDoubleHoles,  halfTSpinTripleHoles, fullTSpinTripleHoles};
+}
+

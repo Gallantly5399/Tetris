@@ -28,12 +28,20 @@ struct Candidate {
     int32_t comboWeight;
     int32_t tetrisWeight;
     int32_t perfectClearWeight;
-    int32_t tSpinWeight;
     int32_t singleWeight;
     int32_t doubleWeight;
     int32_t tripleWeight;
     int32_t highestWeight;
     int32_t movementWeight;
+    int32_t halfTSpinDoubleHoleWeight;
+    int32_t fullTSpinDoubleHoleWeight;
+    int32_t halfTSpinTripleHoleWeight;
+    int32_t fullTSpinTripleHoleWeight;
+    int32_t tSpinSingleWeight;
+    int32_t tSpinDoubleWeight;
+    int32_t tSpinTripleWeight;
+    int32_t tSpinMiniSingleWeight;
+    int32_t tSpinMiniDoubleWeight;
     int64_t fitness;
 
 
@@ -50,12 +58,20 @@ std::ostream &operator<<(std::ostream &os, const Candidate &candidate) {
        << ",comboWeight:" << candidate.comboWeight
        << ",tetrisWeight:" << candidate.tetrisWeight
        << ",perfectClearWeight:" << candidate.perfectClearWeight
-       << ",tSpinWeight:" << candidate.tSpinWeight
        << ",singleWeight:" << candidate.singleWeight
        << ",doubleWeight:" << candidate.doubleWeight
        << ",tripleWeight:" << candidate.tripleWeight
        << ",highestWeight:" << candidate.highestWeight
-       << ",movementWeight:" << candidate.movementWeight;
+       << ",movementWeight:" << candidate.movementWeight
+       << ", halfTSpinDoubleHoleWeight:" << candidate.halfTSpinDoubleHoleWeight
+       << ", fullTSpinDoubleHoleWeight:" << candidate.fullTSpinDoubleHoleWeight
+       << ", candidate.halfTSpinTripleHoleWeight:" << candidate.halfTSpinTripleHoleWeight
+       << ", fullTSpinTripleHoleWeight" << candidate.fullTSpinTripleHoleWeight
+       << ", tSpinSingleWeight:" << candidate.tSpinSingleWeight
+       << ", tSpinDoubleWeight:" << candidate.tSpinDoubleWeight
+       << ", tSpinTripleWeight:" << candidate.tSpinTripleWeight
+       << ", tSpinMiniSingleWeight:" << candidate.tSpinMiniSingleWeight
+       << ", tSpinMiniDoubleWeight:" << candidate.tSpinMiniDoubleWeight;
     return os;
 }
 
@@ -90,12 +106,20 @@ public:
         candidate.comboWeight = std::max(1, std::min(1000, candidate.comboWeight));
         candidate.tetrisWeight = std::max(1, std::min(1000, candidate.tetrisWeight));
         candidate.perfectClearWeight = std::max(1, std::min(1000, candidate.perfectClearWeight));
-        candidate.tSpinWeight = std::max(1, std::min(1000, candidate.tSpinWeight));
         candidate.singleWeight = std::max(1, std::min(1000, candidate.singleWeight));
         candidate.doubleWeight = std::max(1, std::min(1000, candidate.doubleWeight));
         candidate.tripleWeight = std::max(1, std::min(1000, candidate.tripleWeight));
         candidate.highestWeight = std::max(1, std::min(1000, candidate.highestWeight));
         candidate.movementWeight = std::max(1, std::min(1000, candidate.movementWeight));
+        candidate.halfTSpinDoubleHoleWeight = std::max(1, std::min(1000, candidate.halfTSpinDoubleHoleWeight));
+        candidate.fullTSpinDoubleHoleWeight = std::max(1, std::min(1000, candidate.fullTSpinDoubleHoleWeight));
+        candidate.halfTSpinTripleHoleWeight = std::max(1, std::min(1000, candidate.halfTSpinTripleHoleWeight));
+        candidate.fullTSpinTripleHoleWeight = std::max(1, std::min(1000, candidate.fullTSpinTripleHoleWeight));
+        candidate.tSpinMiniDoubleWeight = std::max(1, std::min(1000, candidate.tSpinMiniDoubleWeight));
+        candidate.tSpinMiniSingleWeight = std::max(1, std::min(1000, candidate.tSpinMiniSingleWeight));
+        candidate.tSpinTripleWeight = std::max(1, std::min(1000, candidate.tSpinTripleWeight));
+        candidate.tSpinDoubleWeight = std::max(1, std::min(1000, candidate.tSpinDoubleWeight));
+        candidate.tSpinSingleWeight = std::max(1, std::min(1000, candidate.tSpinSingleWeight));
     }
 
     Candidate generateRandomCandidate() {
@@ -109,12 +133,21 @@ public:
                 .comboWeight = randomInteger(1, 1000),
                 .tetrisWeight = randomInteger(1, 1000),
                 .perfectClearWeight = randomInteger(1, 1000),
-                .tSpinWeight = randomInteger(1, 1000),
                 .singleWeight = randomInteger(1, 1000),
                 .doubleWeight = randomInteger(1, 1000),
                 .tripleWeight = randomInteger(1, 1000),
                 .highestWeight = randomInteger(1, 1000),
                 .movementWeight = randomInteger(1, 1000),
+                .halfTSpinDoubleHoleWeight = randomInteger(1, 1000),
+                .fullTSpinDoubleHoleWeight = randomInteger(1, 1000),
+                .halfTSpinTripleHoleWeight = randomInteger(1, 1000),
+                .fullTSpinTripleHoleWeight = randomInteger(1, 1000),
+                .tSpinSingleWeight = randomInteger(1, 1000),
+                .tSpinDoubleWeight = randomInteger(1, 1000),
+                .tSpinTripleWeight = randomInteger(1, 1000),
+                .tSpinMiniSingleWeight = randomInteger(1, 1000),
+                .tSpinMiniDoubleWeight = randomInteger(1, 1000),
+                .fitness = 0
         };
 //        normalize(candidate);
         return candidate;
@@ -202,8 +235,6 @@ public:
                                                      coefficient2 * candidate2.tetrisWeight),
                 .perfectClearWeight = static_cast<int32_t>(coefficient1 * candidate1.perfectClearWeight +
                                                            coefficient2 * candidate2.perfectClearWeight),
-                .tSpinWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinWeight +
-                                                    coefficient2 * candidate2.tSpinWeight),
                 .singleWeight = static_cast<int32_t>(coefficient1 * candidate1.singleWeight +
                                                      coefficient2 * candidate2.singleWeight),
                 .doubleWeight = static_cast<int32_t>(coefficient1 * candidate1.doubleWeight +
@@ -214,6 +245,25 @@ public:
                                                       coefficient2 * candidate2.highestWeight),
                 .movementWeight = static_cast<int32_t>(coefficient1 * candidate1.movementWeight +
                                                        coefficient2 * candidate2.movementWeight),
+                .halfTSpinDoubleHoleWeight = static_cast<int32_t>(coefficient1 * candidate1.halfTSpinDoubleHoleWeight +
+                                                                  coefficient2 * candidate2.halfTSpinDoubleHoleWeight),
+                .fullTSpinDoubleHoleWeight = static_cast<int32_t>(coefficient1 * candidate1.fullTSpinDoubleHoleWeight +
+                                                                  coefficient2 * candidate2.fullTSpinDoubleHoleWeight),
+                .halfTSpinTripleHoleWeight = static_cast<int32_t>(coefficient1 * candidate1.halfTSpinTripleHoleWeight +
+                                                                  coefficient2 * candidate2.halfTSpinTripleHoleWeight),
+                .fullTSpinTripleHoleWeight = static_cast<int32_t>(coefficient1 * candidate1.fullTSpinTripleHoleWeight +
+                                                                  coefficient2 * candidate2.fullTSpinTripleHoleWeight),
+                .tSpinSingleWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinSingleWeight +
+                                                          coefficient2 * candidate2.tSpinSingleWeight),
+                .tSpinDoubleWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinDoubleWeight +
+                                                          coefficient2 * candidate2.tSpinDoubleWeight),
+                .tSpinTripleWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinTripleWeight +
+                                                          coefficient2 * candidate2.tSpinTripleWeight),
+                .tSpinMiniSingleWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinMiniSingleWeight +
+                                                              coefficient2 * candidate2.tSpinMiniSingleWeight),
+                .tSpinMiniDoubleWeight = static_cast<int32_t>(coefficient1 * candidate1.tSpinMiniDoubleWeight +
+                                                              coefficient2 * candidate2.tSpinMiniDoubleWeight),
+
 
         };
         normalize(candidate);
@@ -223,7 +273,7 @@ public:
     void mutate(Candidate &candidate) {
         auto quantity = 0;
         for (int i = 0; i < 4; i++) {
-            switch (randomInteger(0, 14)) {
+            switch (randomInteger(0, 22)) {
                 case 0:
                     quantity = randomInteger(-candidate.heightWeight + 1, candidate.heightWeight);
                     candidate.heightWeight = std::max(candidate.heightWeight + quantity, 0);
@@ -261,8 +311,8 @@ public:
                     candidate.perfectClearWeight = std::max(candidate.perfectClearWeight + quantity, 0);
                     break;
                 case 9:
-                    quantity = randomInteger(-candidate.tSpinWeight + 1, candidate.tSpinWeight);
-                    candidate.tSpinWeight = std::max(candidate.tSpinWeight + quantity, 0);
+                    quantity = randomInteger(-candidate.tSpinSingleWeight + 1, candidate.tSpinSingleWeight);
+                    candidate.tSpinSingleWeight = std::max(candidate.tSpinSingleWeight + quantity, 0);
                     break;
                 case 10:
                     quantity = randomInteger(-candidate.singleWeight + 1, candidate.singleWeight);
@@ -283,6 +333,38 @@ public:
                 case 14:
                     quantity = randomInteger(-candidate.movementWeight + 1, candidate.movementWeight);
                     candidate.movementWeight = std::max(candidate.movementWeight + quantity, 0);
+                    break;
+                case 15:
+                    quantity = randomInteger(-candidate.halfTSpinDoubleHoleWeight + 1,
+                                             candidate.halfTSpinDoubleHoleWeight);
+                    candidate.halfTSpinDoubleHoleWeight = std::max(candidate.halfTSpinDoubleHoleWeight + quantity, 0);
+                case 16:
+                    quantity = randomInteger(-candidate.fullTSpinDoubleHoleWeight + 1,
+                                             candidate.fullTSpinDoubleHoleWeight);
+                    candidate.fullTSpinDoubleHoleWeight = std::max(candidate.fullTSpinDoubleHoleWeight + quantity, 0);
+                case 17:
+                    quantity = randomInteger(-candidate.halfTSpinTripleHoleWeight + 1,
+                                             candidate.halfTSpinTripleHoleWeight);
+                    candidate.halfTSpinTripleHoleWeight = std::max(candidate.halfTSpinTripleHoleWeight + quantity, 0);
+                case 18:
+                    quantity = randomInteger(-candidate.fullTSpinTripleHoleWeight + 1,
+                                             candidate.fullTSpinTripleHoleWeight);
+                    candidate.fullTSpinTripleHoleWeight = std::max(candidate.fullTSpinTripleHoleWeight + quantity, 0);
+                case 19:
+                    quantity = randomInteger(-candidate.tSpinDoubleWeight + 1, candidate.tSpinDoubleWeight);
+                    candidate.tSpinDoubleWeight = std::max(candidate.tSpinDoubleWeight + quantity, 0);
+                    break;
+                case 20:
+                    quantity = randomInteger(-candidate.tSpinTripleWeight + 1, candidate.tSpinTripleWeight);
+                    candidate.tSpinTripleWeight = std::max(candidate.tSpinTripleWeight + quantity, 0);
+                    break;
+                case 21:
+                    quantity = randomInteger(-candidate.tSpinMiniSingleWeight + 1, candidate.tSpinMiniSingleWeight);
+                    candidate.tSpinMiniSingleWeight = std::max(candidate.tSpinMiniSingleWeight + quantity, 0);
+                    break;
+                case 22:
+                    quantity = randomInteger(-candidate.tSpinMiniDoubleWeight + 1, candidate.tSpinMiniDoubleWeight);
+                    candidate.tSpinMiniDoubleWeight = std::max(candidate.tSpinMiniDoubleWeight + quantity, 0);
                     break;
             }
         }
@@ -321,12 +403,20 @@ public:
                     candidates[i].comboWeight,
                     candidates[i].tetrisWeight,
                     candidates[i].perfectClearWeight,
-                    candidates[i].tSpinWeight,
                     candidates[i].singleWeight,
                     candidates[i].doubleWeight,
                     candidates[i].tripleWeight,
                     candidates[i].highestWeight,
-                    candidates[i].movementWeight
+                    candidates[i].movementWeight,
+                    candidates[i].halfTSpinDoubleHoleWeight,
+                    candidates[i].fullTSpinDoubleHoleWeight,
+                    candidates[i].halfTSpinTripleHoleWeight,
+                    candidates[i].fullTSpinTripleHoleWeight,
+                    candidates[i].tSpinSingleWeight,
+                    candidates[i].tSpinDoubleWeight,
+                    candidates[i].tSpinTripleWeight,
+                    candidates[i].tSpinMiniSingleWeight,
+                    candidates[i].tSpinMiniDoubleWeight,
             };
             table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), candidateArray);
         }
@@ -397,8 +487,11 @@ private:
         AI ai = AI(candidate.heightWeight, candidate.scoreWeight, candidate.holesWeight,
                    candidate.bumpinessWeight, candidate.emptyLinesWeight, candidate.backToBackWeight,
                    candidate.comboWeight, candidate.tetrisWeight, candidate.perfectClearWeight,
-                   candidate.tSpinWeight, candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight,
-                   candidate.highestWeight, candidate.movementWeight);
+                   candidate.singleWeight, candidate.doubleWeight, candidate.tripleWeight,
+                   candidate.highestWeight, candidate.movementWeight, candidate.halfTSpinDoubleHoleWeight,
+                   candidate.fullTSpinDoubleHoleWeight, candidate.halfTSpinTripleHoleWeight,
+                   candidate.fullTSpinTripleHoleWeight, candidate.tSpinSingleWeight, candidate.tSpinDoubleWeight,
+                      candidate.tSpinTripleWeight, candidate.tSpinMiniSingleWeight, candidate.tSpinMiniDoubleWeight);
         uint64_t totalScore = 0;
         int totalMovement = 0;
         for (int j = 0; j < numberOfGames; j++) {

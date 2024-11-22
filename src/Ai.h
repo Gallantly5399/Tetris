@@ -15,7 +15,9 @@
 #include <mutex>
 #include <cassert>
 
+//TODO::modify tspinhole weight
 //TODO::Pack the movement data
+//TODO::add tspin weight
 struct MovementData {
     std::vector<Movement> data;
     int readIndex = 0;
@@ -61,8 +63,10 @@ public:
     };
     AI(int32_t heightWeight, int32_t scoreWeight, int32_t holesWeight, int32_t bumpinessWeight, int32_t emptyLineWeight,
        int32_t backToBackWeight, int32_t comboWeight, int32_t tetrisWeight, int32_t perfectClearWeight,
-       int32_t tSpinWeight, int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight, int32_t highestWeight,
-       int32_t movementWeight) {
+       int32_t singleWeight, int32_t doubleWeight, int32_t tripleWeight, int32_t highestWeight,
+       int32_t movementWeight, int32_t halfTSpinDoubleHoleWeight, int32_t fullTSpinDoubleHoleWeight, int32_t halfTSpinTripleHoleWeight,
+       int32_t fullTSpinTripleHoleWeight, int32_t tSpinSingleWeight, int32_t tSpinDoubleWeight, int32_t tSpinTripleWeight,
+       int32_t tSpinMiniSingleWeight, int32_t tSpinMiniDoubleWeight) {
         this->heightWeight = heightWeight;
         this->scoreWeight = scoreWeight;
         this->holesWeight = holesWeight;
@@ -72,13 +76,22 @@ public:
         this->comboWeight = comboWeight;
         this->tetrisWeight = tetrisWeight;
         this->perfectClearWeight = perfectClearWeight;
-        this->tSpinWeight = tSpinWeight;
         this->singleWeight = singleWeight;
         this->doubleWeight = doubleWeight;
         this->tripleWeight = tripleWeight;
         this->tetrisWeight = tetrisWeight;
         this->highestWeight = highestWeight;
         this->movementWeight = movementWeight;
+        this->halfTSpinDoubleHoleWeight = halfTSpinDoubleHoleWeight;
+        this->fullTSpinDoubleHoleWeight = fullTSpinDoubleHoleWeight;
+        this->halfTSpinTripleHoleWeight = halfTSpinTripleHoleWeight;
+        this->fullTSpinTripleHoleWeight = fullTSpinTripleHoleWeight;
+        this->tSpinSingleWeight = tSpinSingleWeight;
+        this->tSpinDoubleWeight = tSpinDoubleWeight;
+        this->tSpinTripleWeight = tSpinTripleWeight;
+        this->tSpinMiniSingleWeight = tSpinMiniSingleWeight;
+        this->tSpinMiniDoubleWeight = tSpinMiniDoubleWeight;
+
     }
 
     void best(MovementData &movements, MessageData &messageData, std::queue<Block>& checkQueue, Block& gameBestBlock) {
@@ -127,7 +140,7 @@ public:
         std::vector<Candidate> candidates, totalCandidates;
 
         candidates.emplace_back(evaluateFirst(grid), grid, std::vector<Movement>{}, Block{});
-        for (int workingIndex = 0; workingIndex < 10; workingIndex++) {
+        for (int workingIndex = 0; workingIndex < workingPieces.size(); workingIndex++) {
             for (const auto &[score, _movements, workingGrid, _bestBlock]: candidates) {
                 const Block &workingPiece = workingPieces[workingIndex];
                 Grid temGrid = workingGrid;
@@ -178,16 +191,22 @@ public:
     [[nodiscard]] int64_t evaluateFirst(const Grid &grid) const {
         if (grid.exceed()) return std::numeric_limits<int64_t>::lowest();
         ScoreType scoreType = utility::getScoreType(grid, grid.lastBlock);
+        auto [halfDoubleCount, fullDoubleCount, halfTripleCount, fullTripleCount] = utility::getTSpinHole(grid);
         int64_t currentScore =
                 (int64_t) -heightWeight * grid.aggregateHeight() - holesWeight * grid.holes()
                 - bumpinessWeight * grid.bumpiness() + emptyLineWeight * grid.sumOfContinuousEmptyLines()
-                + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount +
-                tetrisWeight * (scoreType == ScoreType::Tetris)
-                + tSpinWeight * utility::isTspin(scoreType) + perfectClearWeight * utility::isPerfectClear(scoreType)
+                + backToBackWeight * grid.backToBack + comboWeight * grid.comboCount
+                + tetrisWeight * (scoreType == ScoreType::Tetris)
+                + perfectClearWeight * utility::isPerfectClear(scoreType)
                 - singleWeight * (scoreType == ScoreType::Single) - doubleWeight * (scoreType == ScoreType::Double)
-                + tripleWeight * (scoreType == ScoreType::Triple)
+                - tripleWeight * (scoreType == ScoreType::Triple)
                 - highestWeight * grid.highest()
-                - movementWeight * grid.lastBlock.totalMovements;
+                - movementWeight * grid.lastBlock.totalMovements
+                + halfTSpinDoubleHoleWeight * halfDoubleCount + fullTSpinDoubleHoleWeight * fullDoubleCount
+                + halfTSpinTripleHoleWeight * halfTripleCount + fullTSpinTripleHoleWeight * fullTripleCount
+                - tSpinSingleWeight * (scoreType == ScoreType::TSpinSingle) + tSpinDoubleWeight * (scoreType == ScoreType::TSpinDouble)
+                + tSpinTripleWeight * (scoreType == ScoreType::TSpinTriple) - tSpinMiniSingleWeight * (scoreType == ScoreType::TSpinMiniSingle)
+                - tSpinMiniDoubleWeight * (scoreType == ScoreType::TSpinMiniDouble);
         return currentScore;
     }
 
@@ -309,7 +328,7 @@ public:
 
     std::queue<std::pair<std::vector<Block>, Grid>> blockQueue;
     bool isStop = false;
-    const uint32_t beamWidth = 20;
+    const uint32_t beamWidth = 40;
     uint32_t PPS = 1;
     //millisecond time for per block
     int32_t heightWeight;
@@ -321,10 +340,19 @@ public:
     int32_t comboWeight;
     int32_t tetrisWeight;
     int32_t perfectClearWeight;
-    int32_t tSpinWeight;
     int32_t singleWeight;
     int32_t doubleWeight;
     int32_t tripleWeight;
     int32_t highestWeight;
     int32_t movementWeight;
+    int32_t halfTSpinDoubleHoleWeight;
+    int32_t fullTSpinDoubleHoleWeight;
+    int32_t halfTSpinTripleHoleWeight;
+    int32_t fullTSpinTripleHoleWeight;
+    int32_t tSpinSingleWeight;
+    int32_t tSpinDoubleWeight;
+    int32_t tSpinTripleWeight;
+    int32_t tSpinMiniSingleWeight;
+    int32_t tSpinMiniDoubleWeight;
+
 };

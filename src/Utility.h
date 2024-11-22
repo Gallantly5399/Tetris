@@ -26,7 +26,71 @@ enum class ScoreType {
     TetrisPerfectClear,
     BackToBackTetrisPerfectClear,
 };
+inline std::ostream &operator<<(std::ostream &os, const ScoreType &scoreType) {
+    switch (scoreType) {
+        case ScoreType::None:
+            os << "None";
+            break;
+        case ScoreType::Single:
+            os << "Single";
+            break;
+        case ScoreType::Double:
+            os << "Double";
+            break;
+        case ScoreType::Triple:
+            os << "Triple";
+            break;
+        case ScoreType::Tetris:
+            os << "Tetris";
+            break;
+        case ScoreType::Combo:
+            os << "Combo";
+            break;
+        case ScoreType::TSpinMiniNoLines:
+            os << "TSpinMiniNoLines";
+            break;
+        case ScoreType::TSpinMiniSingle:
+            os << "TSpinMiniSingle";
+            break;
+        case ScoreType::TSpinMiniDouble:
+            os << "TSpinMiniDouble";
+            break;
+        case ScoreType::TSpinNoLines:
+            os << "TSpinNoLines";
+            break;
+        case ScoreType::TSpinSingle:
+            os << "TSpinSingle";
+            break;
+        case ScoreType::TSpinDouble:
+            os << "TSpinDouble";
+            break;
+        case ScoreType::TSpinTriple:
+            os << "TSpinTriple";
+            break;
+        case ScoreType::SinglePerfectClear:
+            os << "SinglePerfectClear";
+            break;
+        case ScoreType::DoublePerfectClear:
+            os << "DoublePerfectClear";
+            break;
+        case ScoreType::TriplePerfectClear:
+            os << "TriplePerfectClear";
+            break;
+        case ScoreType::TetrisPerfectClear:
+            os << "TetrisPerfectClear";
+            break;
+        case ScoreType::BackToBackTetrisPerfectClear:
+            os << "BackToBackTetrisPerfectClear";
+            break;
 
+    }
+}
+enum class TSpinHole {
+    None,
+    Single,
+    Double,
+    Triple,
+};
 enum class Message {
     BlockTouchGround,
 };
@@ -95,4 +159,6 @@ namespace utility {
     bool isTspin(ScoreType scoreType);
     bool occupy(const Grid& grid, const Block& block); //check if there is block above the block
     bool isPerfectClear(ScoreType scoreType);
+    std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> getTSpinHole(const Grid& grid); //half(TSpin double and TSpin triple) holes amount and full(TSpin single, TSpin double, TSpin triple) holes amount
+    ;
 }

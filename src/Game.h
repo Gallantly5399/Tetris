@@ -68,8 +68,11 @@ private:
     MovementData aiMovement;
     MessageData aiMessage;
     std::queue<Block> checkQueue;
-
+    bool isLeftMove = false;
+    bool isRightMove = false;
     bool firstBlock = false;
+    int leftMoveCount = 0;
+    int rightMoveCount = 0;
     long long aiLastMoveTime = 0;
 //    std::thread aiThread;
     //TODO::read from config file
