@@ -82,7 +82,6 @@ inline std::ostream &operator<<(std::ostream &os, const ScoreType &scoreType) {
         case ScoreType::BackToBackTetrisPerfectClear:
             os << "BackToBackTetrisPerfectClear";
             break;
-
     }
 }
 enum class TSpinHole {

@@ -89,6 +89,8 @@ public:
 //        const std::filesystem::path projectPath(FILE_LOCATION);
         auto config = toml::parse_file("../config.toml");
         MAX_THREAD = config["tuner"]["MAX_THREAD"].value_or(1);
+        if (MAX_THREAD == 0) MAX_THREAD = std::thread::hardware_concurrency();
+        threadPool.reset(MAX_THREAD);
         MAX_MOVES = config["tuner"]["MAX_MOVES"].value_or(300);
         MAX_GAMES = config["tuner"]["MAX_GAMES"].value_or(10);
         MAX_POPULATIONS = config["tuner"]["MAX_POPULATIONS"].value_or(100);
@@ -164,20 +166,12 @@ public:
             }
         } else {
             uint32_t totalThreads = MAX_THREAD;
-            std::vector<std::thread> threads(totalThreads - 1);
-            for (int i = 0; i < threads.size(); i++) {
-                threads[i] = std::thread([i, totalThreads, &candidates, numberOfGames, maxNumberOfMoves, this] {
-                    for (int j = i; j < candidates.size(); j += totalThreads) {
-                        this->threadRun(candidates, numberOfGames, maxNumberOfMoves, j);
-                    }
+            for (int i = 0;i < candidates.size();i ++) {
+                threadPool.detach_task([&candidates, numberOfGames, maxNumberOfMoves, i, this]{
+                    this->threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
                 });
             }
-            for (int i = totalThreads - 1; i < candidates.size(); i += totalThreads) {
-                threadRun(candidates, numberOfGames, maxNumberOfMoves, i);
-            }
-            for (auto &thread: threads) {
-                thread.join();
-            }
+            threadPool.wait();
         }
     }
 
@@ -509,6 +503,7 @@ public:
     };
 
 private:
+    BS::thread_pool threadPool;
     std::mt19937 gen;
     uint32_t MAX_THREAD = 1;
     uint32_t MAX_MOVES = 300;
@@ -543,7 +538,7 @@ private:
             int numberOfMoves = 0;
             bool isHoldBlock = false;
             Block holdBlock{};
-            aiProcessLogger->info("Game Started. TaskID:{} Game:{};", index, j);
+//            aiProcessLogger->info("Game Started. TaskID:{} Game:{};", index, j);
             while ((numberOfMoves++) < maxNumberOfMoves && !grid.exceed()) {
                 Block workingPiece{};
                 if (isHoldBlock) {
@@ -587,17 +582,13 @@ private:
                     score += utility::getScore(grid, workingPiece);
                 }
             }
-            aiProcessLogger->info("Game Ended. TaskID:{} Game:{} completed. Score:{}; Total Movement:{};", index, j,
-                                  score, numberOfMoves);
+//            aiProcessLogger->info("Game Ended. TaskID:{} Game:{} completed. Score:{}; Total Movement:{};", index, j,
+//                                  score, numberOfMoves);
             totalMovement += numberOfMoves;
             totalScore += score;
         }
         aiProcessLogger->info("TaskID:{} completed.", index);
         candidate.fitness = totalScore;
-//        mu.lock();
-//        taskCount ++;
-//        logFile << "TaskID:" << index << " completed;" << taskCount << " tasks have been completed; Remain:" << candidates.size() - taskCount  << '\n' << std::flush;
-//        mu.unlock();
     }
 
     int randomInteger(int min, int max) {
