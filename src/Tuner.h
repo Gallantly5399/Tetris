@@ -15,6 +15,8 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/async.h"
 #include "spdlog/fmt/ostr.h"
+#include "BS_thread_pool.hpp"
+#include <future>
 
 
 //TODO::modify linesWeight to scoreWeight
@@ -91,6 +93,7 @@ public:
         MAX_GAMES = config["tuner"]["MAX_GAMES"].value_or(10);
         MAX_POPULATIONS = config["tuner"]["MAX_POPULATIONS"].value_or(100);
         MAX_GENERATIONS = config["tuner"]["MAX_GENERATIONS"].value_or(1000);
+        DATA_DIR = config["tuner"]["DATA_DIR"].value_or("");
         logFile->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [Thread:%t] [Line:%#] %v");
         aiProcessLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [Thread:%t] %v");
         spdlog::flush_every(std::chrono::seconds(5));
@@ -417,6 +420,7 @@ public:
                     candidates[i].tSpinTripleWeight,
                     candidates[i].tSpinMiniSingleWeight,
                     candidates[i].tSpinMiniDoubleWeight,
+                    candidates[i].fitness,
             };
             table["Candidates"].as_table()->emplace(fmt::format("Candidate{}", i), candidateArray);
         }
@@ -428,18 +432,54 @@ public:
     void run() {
         auto logger = spdlog::basic_logger_mt("AI_DATA", "../logs/AiTrainData.txt");
         //TODO:: add concurrency
-        std::vector<Candidate> candidates;
+        std::vector<Candidate> candidates(MAX_POPULATIONS);
         // Initial population generation
-        for (int i = 0; i < MAX_POPULATIONS; i++) {
-            candidates.emplace_back(generateRandomCandidate());
+        if (DATA_DIR.empty()) {
+            for (int i = 0; i < MAX_POPULATIONS; i++) {
+                candidates[i] = generateRandomCandidate();
+            }
+            logger->info("Computing fitnesses of initial candidates.");
+            //timer
+            computeFitnesses(candidates, MAX_GAMES, MAX_MOVES);
+            std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
+                return a.fitness > b.fitness;
+            });
+            serialize(candidates, 0);
+        } else {
+            logger->info("Load data from {}", DATA_DIR);
+            auto table = toml::parse_file(DATA_DIR);
+            auto candidateTable = table["Candidates"].as_table();
+            for (int i = 0;i < MAX_POPULATIONS;i ++) {
+                auto candidateArray = candidateTable->at(fmt::format("Candidate{}", i)).as_array();
+                candidates[i] = {
+                        .heightWeight = candidateArray[0].value_or(0),
+                        .scoreWeight = candidateArray[1].value_or(0),
+                        .holesWeight = candidateArray[2].value_or(0),
+                        .bumpinessWeight = candidateArray[3].value_or(0),
+                        .emptyLinesWeight = candidateArray[4].value_or(0),
+                        .backToBackWeight = candidateArray[5].value_or(0),
+                        .comboWeight = candidateArray[6].value_or(0),
+                        .tetrisWeight = candidateArray[7].value_or(0),
+                        .perfectClearWeight = candidateArray[8].value_or(0),
+                        .singleWeight = candidateArray[9].value_or(0),
+                        .doubleWeight = candidateArray[10].value_or(0),
+                        .tripleWeight = candidateArray[11].value_or(0),
+                        .highestWeight = candidateArray[12].value_or(0),
+                        .movementWeight = candidateArray[13].value_or(0),
+                        .halfTSpinDoubleHoleWeight = candidateArray[14].value_or(0),
+                        .fullTSpinDoubleHoleWeight = candidateArray[15].value_or(0),
+                        .halfTSpinTripleHoleWeight = candidateArray[16].value_or(0),
+                        .fullTSpinTripleHoleWeight = candidateArray[17].value_or(0),
+                        .tSpinSingleWeight = candidateArray[18].value_or(0),
+                        .tSpinDoubleWeight = candidateArray[19].value_or(0),
+                        .tSpinTripleWeight = candidateArray[20].value_or(0),
+                        .tSpinMiniSingleWeight = candidateArray[21].value_or(0),
+                        .tSpinMiniDoubleWeight = candidateArray[22].value_or(0),
+                        .fitness = candidateArray[23].value_or(0)
+                };
+            }
         }
-        logger->info("Computing fitnesses of initial candidates.");
-        //timer
-        computeFitnesses(candidates, MAX_GAMES, MAX_MOVES);
-        std::sort(candidates.begin(), candidates.end(), [&](Candidate a, Candidate b) {
-            return a.fitness > b.fitness;
-        });
-        serialize(candidates, 0);
+
         int count = 0;
         for (int generation = 1; generation <= MAX_GENERATIONS; generation++) {
             std::vector<Candidate> newCandidates;
@@ -475,6 +515,7 @@ private:
     uint32_t MAX_GAMES = 10;
     uint32_t MAX_POPULATIONS = 100;
     uint32_t MAX_GENERATIONS = 1000;
+    std::string_view DATA_DIR = "";
     std::shared_ptr<spdlog::logger> logFile = spdlog::basic_logger_mt<spdlog::async_factory>("Tuner",
                                                                                              "../logs/Tuner.txt");
     std::shared_ptr<spdlog::logger> aiProcessLogger = spdlog::basic_logger_mt<spdlog::async_factory>("AI_PROCESS",
